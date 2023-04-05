@@ -1,0 +1,37 @@
+{
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "ts-loader": "^9.4.2",
+    "typescript": "^5.0.3",
+    "webpack": "^5.77.0",
+    "webpack-cli": "^5.0.1"
+  },
+  "name": "babylon_ros",
+  "description": "Babylon.JS abstractions for ROS2",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "build": "webpack --mode development",
+    "watch": "webpack --mode development --watch",
+    "pretest": "npm run build"
+  },
+  "keywords": [
+    "babylonjs",
+    "ros",
+    "ros2"
+  ],
+  "author": "lou@polyhobbyist.com",
+  "license": "MIT",
+  "dependencies": {
+    "@types/xml2js": "^0.4.11",
+    "babylonjs": "^5.53.0",
+    "babylonjs-gui": "^5.53.0",
+    "babylonjs-loaders": "^5.53.0",
+    "babylonjs-materials": "^5.53.0",
+    "babylonjs-viewer": "^5.53.0",
+    "xml-loader": "^1.2.1"
+  }
+}
