@@ -1,7 +1,11 @@
 import { IGeometry } from "./IGeometry";
+import { Visual } from "./Visual";
 
 export class Link {
     public name : string = "";
 
-    public geometry : IGeometry | undefined = undefined;
+    public visual : Visual = new Visual();
+
+    // public collision : Visual | undefined = undefined;
+
 }

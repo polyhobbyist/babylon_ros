@@ -13,6 +13,6 @@ describe("Testing URDF Loading", () => {
         expect(robot.name).toBe('myfirst');
         expect(robot.links.length).toBe(1);
         expect(robot.links[0].name).toBe('base_link');
-        expect(robot.links[0].geometry).toBeInstanceOf(Cylinder);
+        expect(robot.links[0].visual.geometry).toBeInstanceOf(Cylinder);
     });
 });

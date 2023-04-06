@@ -1,6 +1,7 @@
 import {parseString} from 'xml2js';
 import { Robot } from './Robot';
 import { Link } from './Link';
+import { Visual } from './Visual';
 import { Cylinder } from './GeometryCylinder';
 
 export async function parseUrdf(urdf: string) {
@@ -16,10 +17,12 @@ export async function deserializeLink(linkObject: any) : Promise<Link> {
     let link = new Link();
     link.name = linkObject.$.name;
 
+    link.visual.name = link.name;
+
     // TODO: Origin
     // TODO: RPY
     if (linkObject?.visual[0]?.geometry[0]?.cylinder[0]) {
-        link.geometry = new Cylinder(linkObject.visual[0].geometry[0].cylinder[0].$?.length || 0, linkObject.visual[0].geometry[0].cylinder[0].$?.radius || 0);
+        link.visual.geometry = new Cylinder(linkObject.visual[0].geometry[0].cylinder[0].$?.length || 0, linkObject.visual[0].geometry[0].cylinder[0].$?.radius || 0);
     }
 
     return link;
