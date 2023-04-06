@@ -1,5 +1,5 @@
 import * as BABYLON from 'babylonjs';
-import * as Materials from 'babylonjs-materials';
+import { Material } from './Material';
 
 import {Link} from './Link';
 import {Joint} from './Joint';
@@ -8,16 +8,21 @@ export class Robot {
     public name : string = "";
 
     public links : Array<Link> = [];
-    public materials : Array<BABYLON.Material> = [];
+    public materials : Map<string, Material> = new Map<string, Material>();
 
     constructor() {
+        this.materials.set("default", new Material());
     }
     
     create(scene: BABYLON.Scene)
     {
+        for (let [name, mat] of this.materials) {
+            mat.create(scene);
+        }
+
         for (let link of this.links) {
-            if (link.visual.geometry) {
-                link.visual.geometry.create(scene);
+            for (let visual of link.visual) {
+                visual.create(scene, this.materials);
             }
         }
     }

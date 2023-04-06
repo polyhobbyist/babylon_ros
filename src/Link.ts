@@ -4,7 +4,7 @@ import { Visual } from "./Visual";
 export class Link {
     public name : string = "";
 
-    public visual : Visual = new Visual();
+    public visual : Array<Visual> = new Array<Visual>();
 
     // public collision : Visual | undefined = undefined;
 

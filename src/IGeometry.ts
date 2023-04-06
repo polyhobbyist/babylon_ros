@@ -1,7 +1,8 @@
 import * as BABYLON from 'babylonjs';
+import { Material } from './Material';
 
 export interface IGeometry {
     mesh : BABYLON.Mesh | undefined;
 
-    create(scene: BABYLON.Scene) : void;
+    create(scene: BABYLON.Scene, mat: Material) : void;
 }
