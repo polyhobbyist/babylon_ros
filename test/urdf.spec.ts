@@ -15,4 +15,13 @@ describe("Testing URDF Loading", () => {
         expect(robot.links[0].name).toBe('base_link');
         expect(robot.links[0].visual.geometry).toBeInstanceOf(Cylinder);
     });
+
+    test('Test Material Loading', async () => {
+        const basicUrdfFilename = path.join(__dirname, '/testdata/basic_with_material.urdf');
+        const basicUrdf = await fs.readFile(basicUrdfFilename);
+        var robot = await deserializeUrdfToRobot(basicUrdf.toString());
+
+        expect(robot.name).toBe('myfirst');
+    });
+
 });
