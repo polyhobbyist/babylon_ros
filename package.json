@@ -4,6 +4,10 @@
   "version": "0.0.1",
   "main": "dist/ros.js",
   "types": "types/src/ros.d.ts",
+  "exports": {
+    ".": [ "./dist/ros.js" ]
+  },
+    
   "scripts": {
     "test": "jest",
     "build": "webpack --mode development",

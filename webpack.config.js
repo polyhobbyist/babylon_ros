@@ -4,8 +4,12 @@ module.exports = {
     entry: './src/ros.ts',
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'babylon_ros.js',
-        library: 'babylon_ros'
+        filename: 'ros.js',
+        globalObject: 'this',
+        library: {
+            name: 'babylon_ros',
+            type: 'umd'
+        }
     },
     resolve: {
         extensions: ['.ts', '.tsx', '.js'],
@@ -30,5 +34,13 @@ module.exports = {
             }]
     
         }]
-    }
+    },
+    externals: {
+        babylonjs: {
+            commonjs: 'babylonjs',
+            commonjs2: 'babylonjs',
+            amd: 'babylonjs',
+            root: '_',
+        },
+      },    
 }
