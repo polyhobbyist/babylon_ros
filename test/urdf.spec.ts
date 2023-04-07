@@ -7,7 +7,7 @@ import { Cylinder } from '../src/GeometryCylinder';
 import { Robot } from '../src/Robot';
 
 let engine = undefined;
-let scene = undefined;
+let scene : BABYLON.Scene | undefined = undefined;
 
 async function loadRobot(file : string) : Promise<Robot> {
     const basicUrdfFilename = path.join(__dirname, file);
@@ -95,5 +95,19 @@ describe("Testing URDF Loading", () => {
         expect(mat.name).toBe('foofile');
         expect(mat.filename).toBe("foo");
         expect(mat.color).toBeUndefined();
+    });
+
+    test('Test Loading STL Mesh', async () => {
+        const basicUrdfFilename = path.join(__dirname, '/testdata/basic_with_stl_mesh.urdf');
+        const basicUrdf = await fs.readFile(basicUrdfFilename);
+        var robot = await deserializeUrdfToRobot(basicUrdf.toString());
+
+        if (scene) {
+            robot.create(scene);
+        }
+
+        let bl = robot.links.get("base_link");
+        expect(bl).toBeDefined();
+        expect(bl?.visuals[0].geometry?.mesh?.name).toBe("XYZ Cube");
     });
 });

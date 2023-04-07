@@ -8,6 +8,7 @@ import { Visual } from './Visual';
 import { Material } from './Material';
 import { Cylinder } from './GeometryCylinder';
 import { Box } from './GeometryBox';
+import { Mesh } from './Mesh';
 import {parseVector, parseRPY, parseColor } from './util';
 
 export async function parseUrdf(urdf: string) : Promise<any> {
@@ -63,9 +64,9 @@ export async function deserializeVisual(visualObject: any) : Promise<Visual> {
     } else if  (visualObject.geometry[0]?.box && visualObject.geometry[0]?.box.length == 1) {
       let size = parseVector(visualObject.geometry[0].box[0].$.size);
       visual.geometry = new Box(size.x, size.y, size.z);
+    } else if (visualObject.geometry[0]?.mesh != null) {
+        visual.geometry = new Mesh(visualObject.geometry[0].mesh[0].$?.filename, visualObject.geometry[0].mesh[0].$?.scale || 1.0);
     }
-
-
 
     return visual;
 }
