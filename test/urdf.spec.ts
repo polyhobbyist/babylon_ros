@@ -7,15 +7,17 @@ import { Cylinder } from '../src/GeometryCylinder';
 
 let engine = undefined;
 let scene = undefined;
+
 beforeAll(() => {
+    // Needed for testing material loading
     engine = new BABYLON.NullEngine();
     scene = new BABYLON.Scene(engine);
-  });
-  
-  afterAll(() => {
+});
+
+afterAll(() => {
     scene = undefined
     engine = undefined;
-  });
+});
 
 describe("Testing URDF Loading", () => {
     test('Test Basic Loading', async () => {
@@ -23,10 +25,14 @@ describe("Testing URDF Loading", () => {
         const basicUrdf = await fs.readFile(basicUrdfFilename);
         var robot = await deserializeUrdfToRobot(basicUrdf.toString());
 
+        let bl = robot.links.get("base_link");
+
         expect(robot.name).toBe('myfirst');
-        expect(robot.links.length).toBe(1);
-        expect(robot.links[0].name).toBe('base_link');
-        expect(robot.links[0].visual[0].geometry).toBeInstanceOf(Cylinder);
+        expect(robot.links.size).toBe(1);
+        expect(bl).toBeDefined();
+        if (bl) {
+            expect(bl.visual[0].geometry).toBeInstanceOf(Cylinder);
+        }
     });
 
     test('Test Material Loading', async () => {

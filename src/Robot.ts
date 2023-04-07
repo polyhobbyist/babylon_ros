@@ -7,7 +7,8 @@ import {Joint} from './Joint';
 export class Robot {
     public name : string = "";
 
-    public links : Array<Link> = [];
+    public links : Map<string, Link> = new Map<string, Link>();
+    public joints : Map<string, Joint> = new Map<string, Joint>();
     public materials : Map<string, Material> = new Map<string, Material>();
 
     constructor() {
@@ -20,7 +21,7 @@ export class Robot {
             mat.create(scene);
         }
 
-        for (let link of this.links) {
+        for (let [name, link]  of this.links) {
             for (let visual of link.visual) {
                 visual.create(scene, this.materials);
             }

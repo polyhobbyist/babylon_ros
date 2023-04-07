@@ -3,6 +3,7 @@ import * as Materials from 'babylonjs-materials';
 import {parseString} from 'xml2js';
 import { Robot } from './Robot';
 import { Link } from './Link';
+import { Joint, JointType } from './Joint';
 import { Visual } from './Visual';
 import { Material } from './Material';
 import { Cylinder } from './GeometryCylinder';
@@ -64,6 +65,35 @@ export async function deserializeLink(linkObject: any) : Promise<Link> {
     return link;
 }
 
+export async function deserializeJoint(jointObject: any) : Promise<Joint> {
+    let joint = new Joint();
+    joint.name = jointObject.$.name;
+    joint.type = jointObject.$?.type as JointType;
+
+    if (jointObject.limit?.length == 1) {
+        joint.lowerLimit = parseFloat(jointObject.limit[0].$?.lower);
+        joint.upperLimit = parseFloat(jointObject.limit[0].$?.upper);
+    }
+
+    if (jointObject.parent?.length == 1) {
+        joint.parentName = jointObject.parent[0] as string;
+    } else {
+        throw new Error("Joint ${jointObject.$?.name} has multiple parents, and requires only a single.");
+    }
+
+    if (jointObject.child?.length == 1) {
+        joint.childName = jointObject.child[0] as string;
+    } else {
+        throw new Error("Joint ${jointObject.$?.name} has multiple children, and requires only a single.");
+    }
+
+    if (jointObject.origin) {
+        joint.origin = parseVector(jointObject?.origin?.$?.xyz);
+        joint.rpy = parseRPY(jointObject?.origin?.$?.rpy);
+    }
+
+    return joint;
+}
 
 export async function deserializeUrdfToRobot(urdfString: string) : Promise<Robot> {
     let urdf = await parseUrdf(urdfString);
@@ -74,15 +104,25 @@ export async function deserializeUrdfToRobot(urdfString: string) : Promise<Robot
 
     robot.name = urdf.robot.$.name;
 
-    if (urdf.robot?.material instanceof Array) {
+    if (urdf.robot.material instanceof Array) {
         for (let material of urdf.robot.material) {
             let m = await deserializeMaterial(material);
             robot.materials.set(m.name, m);
         }
     }
 
-    for (let link of urdf.robot.link) {
-        robot.links.push(await deserializeLink(link));
+    if (urdf.robot.link instanceof Array) {
+      for (let link of urdf.robot.link) {
+          let l = await deserializeLink(link);
+          robot.links.set(l.name, l);
+      }
+    }
+
+    if (urdf.robot.joint instanceof Array) {
+      for (let joint of urdf.robot.joint) {
+          let j = await deserializeJoint(joint);
+          robot.joints.set(j.name, j);
+      }
     }
 
     return robot;
