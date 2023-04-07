@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<robot name="myfirst">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="file://./xyz_cube" />
+      </geometry>
+    </visual>
+  </link>
+</robot>

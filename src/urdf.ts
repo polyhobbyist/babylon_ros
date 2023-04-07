@@ -7,6 +7,7 @@ import { Joint, JointType } from './Joint';
 import { Visual } from './Visual';
 import { Material } from './Material';
 import { Cylinder } from './GeometryCylinder';
+import { Mesh } from './Mesh';
 import {parseVector, parseRPY, parseColor } from './util';
 
 export async function parseUrdf(urdf: string) : Promise<any> {
@@ -53,8 +54,12 @@ export async function deserializeVisual(visualObject: any) : Promise<Visual> {
         throw new Error("Visual has multiple materials; must only have 1.");
     } 
 
-    if (visualObject.geometry[0]?.cylinder[0]) {
+    if (visualObject.geometry[0]?.cylinder != null) {
         visual.geometry = new Cylinder(visualObject.geometry[0].cylinder[0].$?.length || 0, visualObject.geometry[0].cylinder[0].$?.radius || 0);
+    }
+
+    if (visualObject.geometry[0]?.mesh != null) {
+        visual.geometry = new Mesh(visualObject.geometry[0].mesh[0].$?.filename, visualObject.geometry[0].mesh[0].$?.scale || 1.0);
     }
 
     return visual;
