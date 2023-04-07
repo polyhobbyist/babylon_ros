@@ -9,10 +9,11 @@ export function parseVector(vec: string) : BABYLON.Vector3 {
   return new BABYLON.Vector3(parseFloat(xyz[0]), parseFloat(xyz[1]), parseFloat(xyz[2]));
 }
 
-export function parseRPY(rpy: string) : BABYLON.Quaternion {
+export function parseRPY(rpy: string) : BABYLON.Vector3 {
   let v = parseVector(rpy);
-  
-  return BABYLON.Quaternion.FromEulerVector(v);
+
+  // of course, BABYLON Vector is Pitch, Yaw, Roll
+  return new BABYLON.Vector3(v.y, v.z, v.x);
 }
 
 export function parseColor(color: string) : BABYLON.Color4 {

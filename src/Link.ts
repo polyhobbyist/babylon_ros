@@ -7,12 +7,16 @@ import { Visual } from "./Visual";
 export class Link {
     public name : string = "";
 
-    public transform : BABYLON.TransformNode | undefined;
-
     public material : Material | undefined = undefined;
 
-    public visual : Array<Visual> = new Array<Visual>();
+    public visuals : Array<Visual> = new Array<Visual>();
 
-    // public collision : Visual | undefined = undefined;
+    // public collisions : Visual | undefined = undefined;
+
+    public create(scene: BABYLON.Scene, materialMap : Map<string, Material>) {
+        for (let visual of this.visuals) {
+            visual.create(scene, materialMap);
+        }
+    }
 
 }
