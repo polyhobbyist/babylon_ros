@@ -47,6 +47,12 @@ export async function deserializeVisual(visualObject: any) : Promise<Visual> {
         visual.rpy = parseRPY(visualObject?.origin?.$?.rpy);
     }
 
+    if (visualObject.material?.length == 1) {
+      visual.material = deserializeMaterial(visualObject.material[0]);
+    } else if (visualObject.material?.length > 1) {
+        throw new Error("Visual has multiple materials; must only have 1.");
+    } 
+
     if (visualObject.geometry[0]?.cylinder[0]) {
         visual.geometry = new Cylinder(visualObject.geometry[0].cylinder[0].$?.length || 0, visualObject.geometry[0].cylinder[0].$?.radius || 0);
     }
@@ -58,6 +64,9 @@ export async function deserializeLink(linkObject: any) : Promise<Link> {
     let link = new Link();
     link.name = linkObject.$.name;
 
+    if (linkObject.material?.length == 1) {
+        throw new Error("Link ${link.name} has a material; Did you mean to put it on visual?");
+    } 
 
     for (let visual of linkObject.visual) {
         link.visual.push(await deserializeVisual(visual));

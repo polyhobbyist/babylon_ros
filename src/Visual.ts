@@ -15,8 +15,12 @@ export class Visual {
     public create(scene: BABYLON.Scene, materialMap : Map<string, Material>) : void {
 
         let mat = this.material;
-        if (mat?.isReference()) {
-            mat = materialMap.get(mat.name);
+        if (this.material) {
+            if (this.material.isReference()) {
+                mat = materialMap.get(this.material.name);
+            } else {
+                this.material.create(scene);
+            }
         }
 
         if (mat == undefined) {
@@ -24,7 +28,9 @@ export class Visual {
         }
 
         if (this.geometry && mat) {
+            let pivotMatrix = BABYLON.Matrix.Compose(new BABYLON.Vector3(1.0, 1.0, 1.0), this.rpy, this.origin);
             this.geometry.create(scene, mat);
+            this.geometry.mesh?.setPivotMatrix(pivotMatrix);
         }
     }
 }
