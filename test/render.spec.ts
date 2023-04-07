@@ -25,6 +25,7 @@ describe("Testing Rendering Loading", () => {
         const basicUrdf = await fs.readFile(basicUrdfFilename);
         var robot = await deserializeUrdfToRobot(basicUrdf.toString());
 
+        expect(scene).toBeDefined();
         if (scene) {
             robot.create(scene);
         }
