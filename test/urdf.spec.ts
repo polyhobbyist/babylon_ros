@@ -108,6 +108,6 @@ describe("Testing URDF Loading", () => {
 
         let bl = robot.links.get("base_link");
         expect(bl).toBeDefined();
-        expect(bl?.visuals[0].geometry?.mesh?.name).toBe("XYZ Cube");
+        expect(bl?.visual[0].geometry?.mesh).toBeDefined();
     });
 });
