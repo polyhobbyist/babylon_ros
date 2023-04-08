@@ -11,8 +11,14 @@ export class Visual {
     public material : Material | undefined = undefined;
 
     public origin : BABYLON.Vector3 = new BABYLON.Vector3(0, 0, 0);
-    public rpy : BABYLON.Quaternion = new BABYLON.Quaternion(0, 0, 0, 1);
+    public rpy : BABYLON.Vector3 = new BABYLON.Vector3(0, 0, 0);
+    public transform : BABYLON.TransformNode | undefined;
+
     public create(scene: BABYLON.Scene, materialMap : Map<string, Material>) : void {
+
+        this.transform = new BABYLON.TransformNode("visual_" + this.name, scene);
+        this.transform.locallyTranslate(this.origin);
+        this.transform.rotation = this.rpy;
 
         let mat = this.material;
         if (this.material) {
@@ -28,9 +34,10 @@ export class Visual {
         }
 
         if (this.geometry && mat) {
-            let pivotMatrix = BABYLON.Matrix.Compose(new BABYLON.Vector3(1.0, 1.0, 1.0), this.rpy, this.origin);
             this.geometry.create(scene, mat);
-            this.geometry.mesh?.setPivotMatrix(pivotMatrix);
+            if (this.transform && this.geometry.mesh) {
+                this.geometry.mesh.parent = this.transform;
+            }
         }
     }
 }

@@ -10,17 +10,6 @@ describe("Testing Vector", () => {
   })
 })
 
-describe("Testing Quaternion", () => {
-  test('Parse Quaternion with zeros', () => {
-    let q = parseRPY("0 0 0");
-
-    expect(q.x).toBe(0);
-    expect(q.y).toBe(0);
-    expect(q.z).toBe(0);
-    expect(q.w).toBe(1);
-  })
-})
-
 describe("Testing Color", () => {
   test('Parse Color with zeros', () => {
     let c = parseColor("0 0 0 0");

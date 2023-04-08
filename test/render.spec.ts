@@ -25,12 +25,27 @@ describe("Testing Rendering Loading", () => {
         const basicUrdf = await fs.readFile(basicUrdfFilename);
         var robot = await deserializeUrdfToRobot(basicUrdf.toString());
 
+        expect(scene).toBeDefined();
         if (scene) {
             robot.create(scene);
         }
 
         let bl = robot.links.get("base_link");
         expect(bl).toBeDefined();
-        expect(bl?.visual[0].material?.name).toBe("Cyan");
+        expect(bl?.visuals[0].material?.name).toBe("Cyan");
+    });
+
+    test('Test rendering with single joint', async () => {
+        const basicUrdfFilename = path.join(__dirname, '/testdata/basic_with_joint.urdf');
+        const basicUrdf = await fs.readFile(basicUrdfFilename);
+        var robot = await deserializeUrdfToRobot(basicUrdf.toString());
+
+        expect(scene).toBeDefined();
+        if (scene) {
+            robot.create(scene);
+        }
+
+        let bl = robot.links.get("base_link");
+        expect(bl).toBeDefined();
     });
 });

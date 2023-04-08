@@ -4,9 +4,16 @@ import * as path from 'path';
 import {parseString} from 'xml2js';
 import {deserializeUrdfToRobot, deserializeMaterial, parseUrdf} from '../src/urdf'
 import { Cylinder } from '../src/GeometryCylinder';
+import { Robot } from '../src/Robot';
 
 let engine = undefined;
 let scene : BABYLON.Scene | undefined = undefined;
+
+async function loadRobot(file : string) : Promise<Robot> {
+    const basicUrdfFilename = path.join(__dirname, file);
+    const basicUrdf = await fs.readFile(basicUrdfFilename);
+    return await deserializeUrdfToRobot(basicUrdf.toString());
+}
 
 beforeAll(() => {
     // Needed for testing material loading
@@ -21,9 +28,7 @@ afterAll(() => {
 
 describe("Testing URDF Loading", () => {
     test('Test Basic Loading', async () => {
-        const basicUrdfFilename = path.join(__dirname, '/testdata/basic.urdf');
-        const basicUrdf = await fs.readFile(basicUrdfFilename);
-        var robot = await deserializeUrdfToRobot(basicUrdf.toString());
+        var robot = await loadRobot('/testdata/basic.urdf');
 
         let bl = robot.links.get("base_link");
 
@@ -31,14 +36,25 @@ describe("Testing URDF Loading", () => {
         expect(robot.links.size).toBe(1);
         expect(bl).toBeDefined();
         if (bl) {
-            expect(bl.visual[0].geometry).toBeInstanceOf(Cylinder);
+            expect(bl.visuals[0].geometry).toBeInstanceOf(Cylinder);
+        }
+    });
+
+    test('Test Basic with Joint', async () => {
+        var robot = await loadRobot('/testdata/basic_with_joint.urdf');
+
+        let bl = robot.links.get("base_link");
+
+        expect(robot.name).toBe('origins');
+        expect(robot.links.size).toBe(2);
+        expect(bl).toBeDefined();
+        if (bl) {
+            expect(bl.visuals[0].geometry).toBeInstanceOf(Cylinder);
         }
     });
 
     test('Test Material Loading', async () => {
-        const basicUrdfFilename = path.join(__dirname, '/testdata/basic_with_material.urdf');
-        const basicUrdf = await fs.readFile(basicUrdfFilename);
-        var robot = await deserializeUrdfToRobot(basicUrdf.toString());
+        var robot = await loadRobot('/testdata/basic_with_material.urdf');
 
         expect(robot.name).toBe('myfirst');
 
