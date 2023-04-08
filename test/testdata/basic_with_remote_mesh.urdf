@@ -3,7 +3,7 @@
   <link name="base_link">
     <visual>
       <geometry>
-        <mesh filename="file://../test/testdata/xyz_cube.stl" />
+        <mesh filename="https://upload.wikimedia.org/wikipedia/commons/3/36/3D_model_of_a_Cube.stl" />
       </geometry>
     </visual>
   </link>

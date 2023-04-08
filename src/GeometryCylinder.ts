@@ -7,7 +7,7 @@ export class Cylinder implements IGeometry {
     public radius : number = 0;
 
 
-    public mesh: BABYLON.Mesh | undefined = undefined;
+    public mesh: BABYLON.AbstractMesh | undefined = undefined;
 
     constructor(l : number, r: number) {
         this.length = l;
