@@ -14,7 +14,7 @@
     ]
   },
   "scripts": {
-    "test": "jest --ci --reporters=default --reporters=jest-Junit",
+    "test": "jest --ci --reporters=default --reporters=jest-junit",
     "build": "webpack --mode development",
     "watch": "webpack --mode development --watch",
     "pretest": "npm run build",

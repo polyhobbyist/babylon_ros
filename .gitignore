@@ -102,3 +102,6 @@ types
 
 # TernJS port file
 .tern-port
+
+# jest tests
+reports
