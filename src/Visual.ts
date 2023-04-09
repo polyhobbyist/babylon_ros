@@ -17,7 +17,7 @@ export class Visual {
     public create(scene: BABYLON.Scene, materialMap : Map<string, Material>) : void {
 
         this.transform = new BABYLON.TransformNode("visual_" + this.name, scene);
-        this.transform.locallyTranslate(this.origin);
+        this.transform.position = this.origin;
         this.transform.rotation = this.rpy;
 
         let mat = this.material;
@@ -35,8 +35,8 @@ export class Visual {
 
         if (this.geometry && mat) {
             this.geometry.create(scene, mat);
-            if (this.transform && this.geometry.mesh) {
-                this.geometry.mesh.parent = this.transform;
+            if (this.transform && this.geometry.transform) {
+                this.geometry.transform.parent = this.transform;
             }
         }
     }

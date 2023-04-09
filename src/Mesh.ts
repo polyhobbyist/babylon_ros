@@ -10,12 +10,16 @@ export class Mesh implements IGeometry {
     public scale: number = 1.0;
 
     public mesh: BABYLON.AbstractMesh | undefined = undefined;
+    public transform : BABYLON.TransformNode | undefined;
 
     constructor(uri: string, scale: number) {
         this.uri = uri;
     }
     
     public create(scene: BABYLON.Scene, mat: Material) : void {
+        this.transform = new BABYLON.TransformNode("mesh_mesh", scene);
+        // TODO: Apply transform to match ROS coordinate system if needed
+
         // TODO: Not sure why BabylonJS is so brain dead with this?
         if (this.uri.startsWith("file://"))
         {
@@ -44,6 +48,10 @@ export class Mesh implements IGeometry {
                     this.mesh.material = mat.material as BABYLON.Material;
                 }
             });
+        }
+
+        if (this.mesh) {
+            this.mesh.parent = this.transform;
         }
     }
 }

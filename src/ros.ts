@@ -1,4 +1,6 @@
 export * from "./GeometryCylinder"
+export * from "./GeometryBox"
+export * from "./GeometrySphere"
 export * from "./IGeometry"
 export * from "./Joint"
 export * from "./Link"

@@ -9,14 +9,23 @@ export class Box implements IGeometry {
 
 
     public mesh: BABYLON.Mesh | undefined = undefined;
+    public transform : BABYLON.TransformNode | undefined;
 
-    constructor(w : number, h: number, d: number) {
-        this.width = w;
-        this.height = h;
-        this.depth = d;
+    constructor(x : number, y: number, z: number) {
+
+        // BabylonJS maps w/h/d differently than ROS
+        // d: z
+        // h: y
+        // w: x
+
+        this.width = x;
+        this.height = y;
+        this.depth = z;
     }
     
     public create(scene: BABYLON.Scene, mat: Material) : void {
+        this.transform = new BABYLON.TransformNode("mesh_box", scene);
+
         this.mesh = BABYLON.MeshBuilder.CreateBox("box", 
             {
                 width: this.width,
@@ -25,5 +34,6 @@ export class Box implements IGeometry {
             }, scene);
 
         this.mesh.material = mat.material as BABYLON.Material;
+        this.mesh.parent = this.transform;
     }
 }

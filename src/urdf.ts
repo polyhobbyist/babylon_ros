@@ -7,6 +7,7 @@ import { Joint, JointType } from './Joint';
 import { Visual } from './Visual';
 import { Material } from './Material';
 import { Cylinder } from './GeometryCylinder';
+import { Sphere } from './GeometrySphere';
 import { Box } from './GeometryBox';
 import { Mesh } from './Mesh';
 import {parseVector, parseRPY, parseColor } from './util';
@@ -66,6 +67,8 @@ export async function deserializeVisual(visualObject: any) : Promise<Visual> {
       visual.geometry = new Box(size.x, size.y, size.z);
     } else if (visualObject.geometry[0]?.mesh != null) {
         visual.geometry = new Mesh(visualObject.geometry[0].mesh[0].$?.filename, visualObject.geometry[0].mesh[0].$?.scale || 1.0);
+      } else if (visualObject.geometry[0]?.sphere != null) {
+        visual.geometry = new Sphere(visualObject.geometry[0].sphere[0].$?.radius || 1.0);
     }
 
     return visual;
@@ -109,12 +112,12 @@ export async function deserializeJoint(jointObject: any) : Promise<Joint> {
         throw new Error(`Joint ${jointObject.$?.name} has multiple children, and requires only a single.`);
     }
 
-    if (jointObject.origin) {
-      if (jointObject?.origin?.$?.xyz) {
-        joint.origin = parseVector(jointObject?.origin?.$?.xyz);
+    if (jointObject.origin && jointObject.origin.length == 1) {
+      if (jointObject.origin[0].$.xyz) {
+        joint.origin = parseVector(jointObject.origin[0].$.xyz);
       }
-      if (jointObject?.origin?.$?.rpy) {
-        joint.rpy = parseRPY(jointObject?.origin?.$?.rpy);
+      if (jointObject.origin[0].$.rpy) {
+        joint.rpy = parseRPY(jointObject.origin[0].$.rpy);
       }
     }
 

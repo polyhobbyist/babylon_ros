@@ -20,6 +20,9 @@ export class Robot {
     create(scene: BABYLON.Scene) {
       this.transform = new BABYLON.TransformNode(this.name, scene);
 
+      // Babylon.JS coordinate system to ROS transform
+      this.transform.rotation.x =  -Math.PI/2;
+
       for (let [name, mat] of this.materials) {
         mat.create(scene);
       }
@@ -31,25 +34,35 @@ export class Robot {
       let base_link = this.links.get("base_link");
       if (base_link == undefined) {
         throw new Error("No base_link defined in this robot");
+      } else if (base_link.transform) {
+        base_link.transform.parent = this.transform;
       }
 
       for (let [name, joint] of this.joints) {
+        joint.create(scene, this.materials);
+      }
 
-        if (joint.parent && 
-            joint.parent.visuals.length > 0 && 
-            joint.transform && 
-            joint.parent.visuals[0].transform) {
-          joint.transform.parent = joint.parent.visuals[0].transform;
+      // Fixup transform tree
+      for (let [name, joint] of this.joints) {
+        // A Joint connects two links - each has a transform
+        // We want this joint to be conncted to the "parent" link between the two links
+        if (joint.transform) {
+          if (joint.parent && 
+              joint.parent.transform) {
+              joint.transform.parent = joint.parent.transform;
+          } else {
+            // TODO: Is this a bug?
+          }
 
-          // BUGBUG - spec says the multiple visuals can exist, but which is the transform parent?
-          if (joint.child && joint.child.visuals) {
-            for (let v of joint.child.visuals) {
-              if (v.transform ) {
-                v.transform.parent = joint.transform;
-              }
-            }
+          // We also want the child link to point to this joints' transform.
+          if (joint.child && 
+              joint.child.transform) {
+              joint.child.transform.parent = joint.transform;
+          } else {
+            // TODO: Is this a bug?
           }
         }
       }
+
     }
 }

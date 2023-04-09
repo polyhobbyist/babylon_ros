@@ -5,15 +5,10 @@ import {parseString} from 'xml2js';
 import {deserializeUrdfToRobot, deserializeMaterial, parseUrdf} from '../src/urdf'
 import { Cylinder } from '../src/GeometryCylinder';
 import { Robot } from '../src/Robot';
+import {loadRobot} from './testutil';
 
 let engine = undefined;
 let scene : BABYLON.Scene | undefined = undefined;
-
-async function loadRobot(file : string) : Promise<Robot> {
-    const basicUrdfFilename = path.join(__dirname, file);
-    const basicUrdf = await fs.readFile(basicUrdfFilename);
-    return await deserializeUrdfToRobot(basicUrdf.toString());
-}
 
 beforeAll(() => {
     // Needed for testing material loading
@@ -108,6 +103,6 @@ describe("Testing URDF Loading", () => {
 
         let bl = robot.links.get("base_link");
         expect(bl).toBeDefined();
-        expect(bl?.visual[0].geometry?.mesh).toBeDefined();
+        expect(bl?.visuals[0].geometry?.mesh).toBeDefined();
     });
 });

@@ -35,7 +35,7 @@ export class Joint {
     public create(scene: BABYLON.Scene, materialMap : Map<string, Material>) : void {
 
         this.transform = new BABYLON.TransformNode("joint_" + this.name, scene);
-        this.transform.locallyTranslate(this.origin);
+        this.transform.position = this.origin;
         this.transform.rotation = this.rpy;
     }
     

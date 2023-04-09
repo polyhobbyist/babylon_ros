@@ -4,6 +4,7 @@ import * as path from 'path';
 import {parseString} from 'xml2js';
 import {deserializeUrdfToRobot, deserializeMaterial, parseUrdf} from '../src/urdf'
 import { Cylinder } from '../src/GeometryCylinder';
+import {loadRobot} from './testutil';
 
 let engine = undefined;
 let scene : BABYLON.Scene | undefined = undefined;
@@ -21,9 +22,7 @@ afterAll(() => {
 
 describe("Testing Rendering Loading", () => {
     test('Test simple create', async () => {
-        const basicUrdfFilename = path.join(__dirname, '/testdata/basic_with_material.urdf');
-        const basicUrdf = await fs.readFile(basicUrdfFilename);
-        var robot = await deserializeUrdfToRobot(basicUrdf.toString());
+        var robot = await loadRobot('/testdata/basic_with_material.urdf');
 
         expect(scene).toBeDefined();
         if (scene) {
@@ -36,9 +35,19 @@ describe("Testing Rendering Loading", () => {
     });
 
     test('Test rendering with single joint', async () => {
-        const basicUrdfFilename = path.join(__dirname, '/testdata/basic_with_joint.urdf');
-        const basicUrdf = await fs.readFile(basicUrdfFilename);
-        var robot = await deserializeUrdfToRobot(basicUrdf.toString());
+        var robot = await loadRobot('/testdata/basic_with_joint.urdf');
+
+        expect(scene).toBeDefined();
+        if (scene) {
+            robot.create(scene);
+        }
+
+        let bl = robot.links.get("base_link");
+        expect(bl).toBeDefined();
+    });
+
+    test('Test rendering with r2', async () => {
+        var robot = await loadRobot('/testdata/basic_with_joint.urdf');
 
         expect(scene).toBeDefined();
         if (scene) {
