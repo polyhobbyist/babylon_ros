@@ -3,7 +3,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/polyhobbyist/babylon_ros.git"
-  },  
+  },
   "description": "Babylon.JS abstractions for ROS 2",
   "version": "0.0.1",
   "main": "dist/ros.js",
@@ -14,7 +14,7 @@
     ]
   },
   "scripts": {
-    "test": "jest",
+    "test": "jest --ci --reporters=default --reporters=jest-Junit",
     "build": "webpack --mode development",
     "watch": "webpack --mode development --watch",
     "pretest": "npm run build",
@@ -30,6 +30,15 @@
     "os": false,
     "path": false
   },
+  "jest-junit": {
+    "outputDirectory": "reports",
+    "outputName": "jest-junit.xml",
+    "ancestorSeparator": " › ",
+    "uniqueOutputName": "false",
+    "suiteNameTemplate": "{filepath}",
+    "classNameTemplate": "{classname}",
+    "titleTemplate": "{title}"
+  },  
   "author": "lou@polyhobbyist.com",
   "license": "MIT",
   "dependencies": {
@@ -49,6 +58,7 @@
     "@types/jest": "^29.5.0",
     "@types/node": "^18.15.11",
     "jest": "^29.5.0",
+    "jest-junit": "^15.0.0",
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.2",
     "tslib": "^2.5.0",
