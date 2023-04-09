@@ -1,8 +1,11 @@
 {
-  "name": "babylon_ros",
+  "name": "@polyhobbyist/babylon_ros",
   "repository": {
     "type": "git",
     "url": "https://github.com/polyhobbyist/babylon_ros.git"
+  },
+  "publishConfig": {
+    "@polyhobbyist:registry": "https://npm.pkg.github.com"
   },
   "description": "Babylon.JS abstractions for ROS 2",
   "version": "0.0.1",
