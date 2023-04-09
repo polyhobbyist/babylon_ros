@@ -24,7 +24,6 @@ export async function parseUrdf(urdf: string) : Promise<any> {
 export function deserializeMaterial(materialNode: any) : Material {
     let m = new Material;
     m.name = materialNode.$?.name;
-    console.debug(JSON.stringify(materialNode));
     if (materialNode.color?.length == 1 && materialNode.color[0].$?.rgba) {
         let color = parseColor(materialNode.color[0].$.rgba);
         m.color = color
@@ -126,8 +125,6 @@ export async function deserializeJoint(jointObject: any) : Promise<Joint> {
 
 export async function deserializeUrdfToRobot(urdfString: string) : Promise<Robot> {
     let urdf = await parseUrdf(urdfString);
-
-    console.debug(JSON.stringify(urdf, undefined, 2));
 
     let robot = new Robot();
 
