@@ -47,7 +47,7 @@ describe("Testing Rendering Loading", () => {
     });
 
     test('Test rendering with r2', async () => {
-        var robot = await loadRobot('/testdata/basic_with_joint.urdf');
+        var robot = await loadRobot('/testdata/r2.urdf');
 
         expect(scene).toBeDefined();
         if (scene) {

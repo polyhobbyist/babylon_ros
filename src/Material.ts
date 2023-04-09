@@ -11,7 +11,7 @@ export class Material {
     }
 
     public isReference() : boolean {
-        return this.filename == undefined && this.color == undefined;
+        return this.filename === "" && this.color == undefined;
     }
     
     public create(scene: BABYLON.Scene) : void {
