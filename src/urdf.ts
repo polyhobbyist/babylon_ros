@@ -75,37 +75,68 @@ export async function deserializeVisual(visualObject: any) : Promise<Visual> {
 
 export async function deserializeLink(linkObject: any) : Promise<Link> {
     let link = new Link();
-    link.name = linkObject.$.name;
+    if (linkObject.$?.name) {
+      link.name = linkObject.$.name;
+    } else {
+      throw new Error("Links must have a name.");
+    }
 
     if (linkObject.material?.length == 1) {
         throw new Error(`Link ${link.name} has a material; Did you mean to put it on visual?`);
     } 
 
-    for (let visual of linkObject.visual) {
-      let v = await deserializeVisual(visual);
-      v.name = link.name;
-      link.visuals.push(v);
+    if (linkObject.visual?.length > 0) {
+      for (let visual of linkObject.visual) {
+        let v = await deserializeVisual(visual);
+        v.name = link.name;
+        link.visuals.push(v);
+      }
     }
     return link;
 }
 
 export async function deserializeJoint(jointObject: any) : Promise<Joint> {
     let joint = new Joint();
-    joint.name = jointObject.$.name;
-    joint.type = jointObject.$?.type as JointType;
+    if (jointObject.$?.name) {
+      joint.name = jointObject.$.name;
+    } else {
+      throw new Error("Links must have a name.");
+    }
+    
+    if (jointObject.$?.type) {
+      try {
+      joint.type = jointObject.$.type as JointType;
+      } catch {
+        throw new Error(`Link ${joint.name} has an unknown type.`);
+      }
+    } else {
+      throw new Error(`Link ${joint.name} must have a type.`);
+    }
 
     if (jointObject.limit?.length == 1) {
         joint.lowerLimit = parseFloat(jointObject.limit[0].$?.lower);
         joint.upperLimit = parseFloat(jointObject.limit[0].$?.upper);
+    } 
+    
+    if ((joint.type == JointType.Prismatic ||
+        joint.type == JointType.Revolute) &&
+        (jointObject.limit?.length == 0 ||
+          jointObject.limit.$.effort == undefined ||
+          jointObject.limit.$.velocity == undefined)) {
+      throw new Error(`a Prismatic or Revolute Joint ${jointObject.$?.name} must specify effort and velocity.`);
     }
 
-    if (jointObject.parent?.length == 1) {
+    if (jointObject.parent == undefined || jointObject.parent.length == 0) {
+      throw new Error(`Joint ${jointObject.$?.name} must have a parent.`);
+    } else if (jointObject.parent.length == 1) {
         joint.parentName = jointObject.parent[0].$.link;
     } else {
         throw new Error(`Joint ${jointObject.$?.name} has multiple parents, and requires only a single.`);
     }
 
-    if (jointObject.child?.length == 1) {
+    if (jointObject.child == undefined || jointObject.child.length == 0) {
+      throw new Error(`Joint ${jointObject.$?.name} must have a child.`);
+    } else if (jointObject.child.length == 1) {
         joint.childName = jointObject.child[0].$.link;
     } else {
         throw new Error(`Joint ${jointObject.$?.name} has multiple children, and requires only a single.`);
@@ -140,7 +171,11 @@ export async function deserializeUrdfToRobot(urdfString: string) : Promise<Robot
     if (urdf.robot.link instanceof Array) {
       for (let link of urdf.robot.link) {
         let l = await deserializeLink(link);
-        robot.links.set(l.name, l);
+        if (robot.links.has(l.name)) {
+          throw new Error(`Robot already has ${l.name} please use another name for the second link.`);
+        } else {
+          robot.links.set(l.name, l);
+        }
       }
     }
 

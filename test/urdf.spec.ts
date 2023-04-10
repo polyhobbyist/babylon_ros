@@ -105,4 +105,53 @@ describe("Testing URDF Loading", () => {
         expect(bl).toBeDefined();
         expect(bl?.visuals[0].geometry?.mesh).toBeDefined();
     });
+
+    test('Test Two Base_links', async () => {
+        const urdf = /*xml*/ `
+        <?xml version="1.0"?>
+        <robot name="origins">
+            <link name="base_link"/>
+            <link name="base_link"/>
+        </robot>
+        `
+        expect(async ()=> {
+            var r = await deserializeUrdfToRobot(urdf);
+        }).rejects.toThrow("Robot already has base_link please use another name for the second link.");
+    });
+
+    test('Test link with no name', async () => {
+        const urdf = /*xml*/ `
+        <?xml version="1.0"?>
+        <robot name="origins">
+            <link type="fixed" />
+        </robot>
+        `
+        expect(async ()=> {
+            var r = await deserializeUrdfToRobot(urdf);
+        }).rejects.toThrow("Links must have a name.");
+    });
+
+    test('Test joint with no name', async () => {
+        const urdf = /*xml*/ `
+        <?xml version="1.0"?>
+        <robot name="origins">
+            <joint type="fixed" />
+        </robot>
+        `
+        expect(async ()=> {
+            var r = await deserializeUrdfToRobot(urdf);
+        }).rejects.toThrow("Links must have a name.");
+    });
+
+    test('Test joint with no type', async () => {
+        const urdf = /*xml*/ `
+        <?xml version="1.0"?>
+        <robot name="origins">
+            <joint name="fixed" />
+        </robot>
+        `
+        expect(async ()=> {
+            var r = await deserializeUrdfToRobot(urdf);
+        }).rejects.toThrow("Link fixed must have a type.");
+    });
 });

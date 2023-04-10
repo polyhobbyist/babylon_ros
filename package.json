@@ -4,9 +4,6 @@
     "type": "git",
     "url": "https://github.com/polyhobbyist/babylon_ros.git"
   },
-  "publishConfig": {
-    "@polyhobbyist:registry": "https://npm.pkg.github.com"
-  },
   "description": "Babylon.JS abstractions for ROS 2",
   "version": "0.0.1",
   "main": "dist/ros.js",
@@ -20,7 +17,7 @@
     "./dist"
   ],
   "scripts": {
-    "test": "jest --ci --reporters=default --reporters=jest-junit",
+    "test": "jest --ci --coverage --reporters=default --reporters=jest-junit",
     "build": "webpack --mode development",
     "watch": "webpack --mode development --watch",
     "pretest": "npm run build",
