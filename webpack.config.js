@@ -42,5 +42,5 @@ module.exports = {
             amd: 'babylonjs',
             root: '_',
         },
-      },    
+    }
 }
