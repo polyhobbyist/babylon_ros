@@ -17,7 +17,7 @@
     ]
   },
   "files": [
-    "dist"
+    "./dist"
   ],
   "scripts": {
     "test": "jest --ci --reporters=default --reporters=jest-junit",
