@@ -3,7 +3,7 @@
   <link name="base_link">
     <visual>
       <geometry>
-        <mesh filename="file://../test/testdata/xyz_cube.stl" />
+        <mesh filename="https://c%2B.vscode-resource.vscode-cdn.net/%5Cws%5Cjetbot%5Cws%5Cinstall%5Cshare%5Cjetbot_description/meshes/xyz_cube.stl" />
       </geometry>
     </visual>
   </link>

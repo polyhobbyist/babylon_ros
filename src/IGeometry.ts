@@ -6,4 +6,5 @@ export interface IGeometry {
     transform : BABYLON.TransformNode | undefined;
 
     create(scene: BABYLON.Scene, mat: Material) : void;
+    dispose() : void;
 }

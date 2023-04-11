@@ -29,4 +29,8 @@ export class Material {
             this.material = new Materials.SimpleMaterial(this.name, scene);
         }
     }
+
+    public dispose() {
+        this.material?.dispose();
+    }
 }

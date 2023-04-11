@@ -40,4 +40,15 @@ export class Visual {
             }
         }
     }
+
+    public dispose() : void {
+        this.geometry?.dispose();
+
+        // References will be disposed by the robot
+        if (this.material?.isReference()) {
+            this.material?.dispose();
+        }
+
+        this.transform?.dispose();
+    }
 }

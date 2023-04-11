@@ -25,4 +25,12 @@ export class Link {
         }
     }
 
+    public dispose() : void {
+        this.material?.dispose();
+        this.transform?.dispose();
+        for (let visual of this.visuals) {
+            visual.dispose();
+        }
+    }
+
 }

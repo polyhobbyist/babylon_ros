@@ -40,18 +40,26 @@ export class Mesh implements IGeometry {
                 }
             }, null, null, fileExtension);
         } else {
-            // TODO: This requires XMLHttpRequest
-            BABYLON.SceneLoader.ImportMesh("", this.uri, "", scene, (mesh) => {
-                // Get a pointer to the mesh
-                if (mesh) {
-                    this.mesh = mesh[0];
-                    this.mesh.material = mat.material as BABYLON.Material;
-                }
-            });
+            let filename = this.uri.substring(this.uri.lastIndexOf('/') + 1);
+            if (filename) {
+                let base = this.uri.substring(0, this.uri.lastIndexOf('/') + 1);
+                BABYLON.SceneLoader.ImportMesh(null, base, filename, scene, (mesh) => {
+                    // Get a pointer to the mesh
+                    if (mesh) {
+                        this.mesh = mesh[0];
+                        this.mesh.material = mat.material as BABYLON.Material;
+                    }
+                });
+            }
         }
 
         if (this.mesh) {
             this.mesh.parent = this.transform;
         }
+    }
+
+    public dispose(): void {
+        this.mesh?.dispose();
+        this.transform?.dispose();
     }
 }

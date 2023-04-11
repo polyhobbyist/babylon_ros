@@ -63,6 +63,21 @@ export class Robot {
           }
         }
       }
+    }
 
+    public dispose() : void {
+      this.transform?.dispose();
+
+      for (let [name, mat] of this.materials) {
+        mat.material?.dispose();
+      }
+
+      for (let [name, link] of this.links) {
+        link.dispose();
+      }
+
+      for (let [name, joint] of this.joints) {
+        joint.dispose();
+      }
     }
 }

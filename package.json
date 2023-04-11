@@ -41,7 +41,7 @@
     "suiteNameTemplate": "{filepath}",
     "classNameTemplate": "{classname}",
     "titleTemplate": "{title}"
-  },  
+  },
   "author": "lou@polyhobbyist.com",
   "license": "MIT",
   "dependencies": {

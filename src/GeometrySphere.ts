@@ -25,4 +25,8 @@ export class Sphere implements IGeometry {
         this.mesh.material = mat.material as BABYLON.Material;
         this.mesh.parent = this.transform;
     }
+    public dispose() : void {
+        this.mesh?.dispose();
+        this.transform?.dispose();
+    }
 }

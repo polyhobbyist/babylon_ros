@@ -38,5 +38,9 @@ export class Joint {
         this.transform.position = this.origin;
         this.transform.rotation = this.rpy;
     }
+
+    public dispose() : void {
+        this.transform?.dispose();
+    }
     
 }
