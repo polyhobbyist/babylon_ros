@@ -23,7 +23,7 @@ export class Box implements IGeometry {
         this.depth = z;
     }
     
-    public create(scene: BABYLON.Scene, mat: Material) : void {
+    public create(scene: BABYLON.Scene) : void {
         this.transform = new BABYLON.TransformNode("mesh_box", scene);
 
         this.mesh = BABYLON.MeshBuilder.CreateBox("box", 
@@ -33,7 +33,6 @@ export class Box implements IGeometry {
                 depth: this.depth,
             }, scene);
 
-        this.mesh.material = mat.material as BABYLON.Material;
         this.mesh.parent = this.transform;
     }
     

@@ -14,7 +14,7 @@ export class Sphere implements IGeometry {
         this.radius = r;
     }
     
-    public create(scene: BABYLON.Scene, mat: Material) : void {
+    public create(scene: BABYLON.Scene) : void {
         this.transform = new BABYLON.TransformNode("mesh_sphere", scene);
 
         this.mesh = BABYLON.MeshBuilder.CreateSphere("sphere", 
@@ -22,7 +22,6 @@ export class Sphere implements IGeometry {
                 diameter: this.radius * 2.0,
             }, scene);
 
-        this.mesh.material = mat.material as BABYLON.Material;
         this.mesh.parent = this.transform;
     }
     public dispose() : void {

@@ -29,15 +29,18 @@ export class Visual {
             }
         }
 
-        if (mat == undefined) {
-            mat = materialMap.get("default");
-        }
+        if (this.geometry) {
+            this.geometry.create(scene);
 
-        if (this.geometry && mat) {
-            this.geometry.create(scene, mat);
+            if (mat?.material && this.geometry?.mesh) {
+                this.geometry.mesh.material = mat.material;
+            }
+
             if (this.transform && this.geometry.transform) {
                 this.geometry.transform.parent = this.transform;
             }
+
+
         }
     }
 

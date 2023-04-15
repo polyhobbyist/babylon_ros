@@ -16,9 +16,11 @@ export class Mesh implements IGeometry {
         this.uri = uri;
     }
     
-    public create(scene: BABYLON.Scene, mat: Material) : void {
+    public create(scene: BABYLON.Scene) : void {
         this.transform = new BABYLON.TransformNode("mesh_mesh", scene);
-        // TODO: Apply transform to match ROS coordinate system if needed
+
+        // Meshes are typically in cm, whereas ROS is meters.
+        //this.transform.scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
 
         // TODO: Not sure why BabylonJS is so brain dead with this?
         if (this.uri.startsWith("file://"))
@@ -32,11 +34,10 @@ export class Mesh implements IGeometry {
             var meshdata = readFileSync(filePath).toString('base64');
 
             // Force the file to be read as base64 encoded data blob
-            BABYLON.SceneLoader.ImportMesh("", "", "data:;base64," + meshdata, scene, (mesh) => {
+            BABYLON.SceneLoader.ImportMesh(null, "", "data:;base64," + meshdata, scene, (mesh) => {
                 // Get a pointer to the mesh
-                if (mesh) {
+                if (mesh && mesh.length > 0) {
                     this.mesh = mesh[0];
-                    this.mesh.material = mat.material as BABYLON.Material;
                 }
             }, null, null, fileExtension);
         } else {
@@ -45,9 +46,8 @@ export class Mesh implements IGeometry {
                 let base = this.uri.substring(0, this.uri.lastIndexOf('/') + 1);
                 BABYLON.SceneLoader.ImportMesh(null, base, filename, scene, (mesh) => {
                     // Get a pointer to the mesh
-                    if (mesh) {
+                    if (mesh && mesh.length > 0) {
                         this.mesh = mesh[0];
-                        this.mesh.material = mat.material as BABYLON.Material;
                     }
                 });
             }

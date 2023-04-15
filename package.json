@@ -52,6 +52,7 @@
     "babylonjs-materials": "^5.53.0",
     "babylonjs-viewer": "^5.53.0",
     "buffer": "^6.0.3",
+    "jest-environment-jsdom": "^29.5.0",
     "stream-browserify": "^3.0.0",
     "string_decoder": "^1.3.0",
     "timers-browserify": "^2.0.12",
