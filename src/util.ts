@@ -13,8 +13,8 @@ export function parseVector(vec: string) : BABYLON.Vector3 {
 export function parseRPY(rpy: string) : BABYLON.Vector3 {
   let v = parseVector(rpy);
 
-  // of course, BABYLON Vector is Pitch, Yaw, Roll
-  return new BABYLON.Vector3(v.x, v.y, v.z);
+  // ROS is Roll, Pitch, Yaw - BABYLON Vector is Pitch, Yaw, Roll
+  return new BABYLON.Vector3(v.z, v.x, v.y);
 }
 
 export function parseColor(color: string) : BABYLON.Color4 {

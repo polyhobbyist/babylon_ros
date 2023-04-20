@@ -21,7 +21,7 @@ export class Robot {
       this.transform = new BABYLON.TransformNode(this.name, scene);
 
       // Babylon.JS coordinate system to ROS transform
-      this.transform.rotation.x =  -Math.PI/2;
+      this.transform.rotation =  new BABYLON.Vector3(-Math.PI/2, 0, 0);
 
       for (let [name, mat] of this.materials) {
         mat.create(scene);
@@ -31,11 +31,16 @@ export class Robot {
         link.create(scene, this.materials);
       }
 
-      let base_link = this.links.get("base_link");
-      if (base_link == undefined) {
-        throw new Error("No base_link defined in this robot");
-      } else if (base_link.transform) {
-        base_link.transform.parent = this.transform;
+      // first, check for base_footprint, then base_link
+      let base = this.links.get("base_footprint");
+      if (base == undefined) {
+        base = this.links.get("base_link");
+      }
+
+      if (base == undefined) {
+        throw new Error("No base_link or base_footprint defined in this robot");
+      } else if (base.transform) {
+        base.transform.parent = this.transform;
       }
 
       for (let [name, joint] of this.joints) {
@@ -46,17 +51,17 @@ export class Robot {
       for (let [name, joint] of this.joints) {
         // A Joint connects two links - each has a transform
         // We want this joint to be conncted to the "parent" link between the two links
-        if (joint.transform) {
-          if (joint.parent && 
-              joint.parent.transform) {
+        if (joint.transform != undefined) {
+          if (joint.parent != undefined&& 
+              joint.parent.transform != undefined) {
               joint.transform.parent = joint.parent.transform;
           } else {
             // TODO: Is this a bug?
           }
 
           // We also want the child link to point to this joints' transform.
-          if (joint.child && 
-              joint.child.transform) {
+          if (joint.child  != undefined && 
+              joint.child.transform != undefined) {
               joint.child.transform.parent = joint.transform;
           } else {
             // TODO: Is this a bug?

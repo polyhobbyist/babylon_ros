@@ -61,11 +61,15 @@ export async function deserializeVisual(visualObject: any) : Promise<Visual> {
 
     if (visualObject.geometry[0]?.cylinder && visualObject.geometry[0]?.cylinder.length == 1) {
       visual.geometry = new Cylinder(visualObject.geometry[0].cylinder[0].$?.length || 0, visualObject.geometry[0].cylinder[0].$?.radius || 0);
-    } else if  (visualObject.geometry[0]?.box && visualObject.geometry[0]?.box.length == 1) {
-      let size = parseVector(visualObject.geometry[0].box[0].$.size);
-      visual.geometry = new Box(size.x, size.y, size.z);
-    } else if (visualObject.geometry[0]?.mesh != null) {
-        visual.geometry = new Mesh(visualObject.geometry[0].mesh[0].$?.filename, visualObject.geometry[0].mesh[0].$?.scale || 1.0);
+      } else if  (visualObject.geometry[0]?.box && visualObject.geometry[0]?.box.length == 1) {
+        let size = parseVector(visualObject.geometry[0].box[0].$.size);
+        visual.geometry = new Box(size.x, size.y, size.z);
+      } else if (visualObject.geometry[0]?.mesh != null) {
+        let s = new BABYLON.Vector3(1, 1, 1);
+        if (visualObject.geometry[0].mesh[0].$?.scale) {
+          s = parseVector(visualObject.geometry[0].mesh[0].$.scale);
+        }
+        visual.geometry = new Mesh(visualObject.geometry[0].mesh[0].$?.filename, s);
       } else if (visualObject.geometry[0]?.sphere != null) {
         visual.geometry = new Sphere(visualObject.geometry[0].sphere[0].$?.radius || 1.0);
     }

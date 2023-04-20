@@ -17,10 +17,12 @@ export class Link {
     public create(scene: BABYLON.Scene, materialMap : Map<string, Material>) {
         this.transform = new BABYLON.TransformNode("link_" + this.name, scene);
 
-        for (let visual of this.visuals) {
-            visual.create(scene, materialMap);
-            if (visual.transform) {
-                visual.transform.parent = this.transform;
+        if (this.visuals.length > 0) {
+            for (let visual of this.visuals) {
+                visual.create(scene, materialMap);
+                if (visual.transform) {
+                    visual.transform.parent = this.transform;
+                }
             }
         }
     }
@@ -28,8 +30,10 @@ export class Link {
     public dispose() : void {
         this.material?.dispose();
         this.transform?.dispose();
-        for (let visual of this.visuals) {
-            visual.dispose();
+        if (this.visuals.length > 0) {
+            for (let visual of this.visuals) {
+                visual.dispose();
+            }
         }
     }
 

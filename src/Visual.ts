@@ -18,10 +18,11 @@ export class Visual {
 
         this.transform = new BABYLON.TransformNode("visual_" + this.name, scene);
         this.transform.position = this.origin;
-        this.transform.rotation = this.rpy;
+        // Babylon.JS coordinate system to ROS transform
+        this.transform.rotation = new BABYLON.Vector3(this.rpy.x+Math.PI/2, this.rpy.y, this.rpy.z);
 
         let mat = this.material;
-        if (this.material) {
+        if (this.material != undefined) {
             if (this.material.isReference()) {
                 mat = materialMap.get(this.material.name);
             } else {
@@ -29,14 +30,14 @@ export class Visual {
             }
         }
 
-        if (this.geometry) {
+        if (this.geometry != undefined) {
             this.geometry.create(scene);
 
-            if (mat?.material && this.geometry?.mesh) {
+            if (mat?.material != undefined && this.geometry?.mesh != undefined) {
                 this.geometry.mesh.material = mat.material;
             }
 
-            if (this.transform && this.geometry.transform) {
+            if (this.transform  != undefined && this.geometry.transform != undefined) {
                 this.geometry.transform.parent = this.transform;
             }
 
