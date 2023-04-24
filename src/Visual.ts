@@ -19,7 +19,7 @@ export class Visual {
         this.transform = new BABYLON.TransformNode("visual_" + this.name, scene);
         this.transform.position = this.origin;
         // Babylon.JS coordinate system to ROS transform
-        this.transform.rotation = new BABYLON.Vector3(this.rpy.x+Math.PI/2, this.rpy.y, this.rpy.z);
+        this.transform.rotation = this.rpy;
 
         let mat = this.material;
         if (this.material != undefined) {

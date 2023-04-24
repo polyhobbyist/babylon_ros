@@ -31,10 +31,21 @@ export class Robot {
         link.create(scene, this.materials);
       }
 
-      // first, check for base_footprint, then base_link
-      let base = this.links.get("base_footprint");
-      if (base == undefined) {
-        base = this.links.get("base_link");
+      // NOTES:
+      // 1. The base_link is the root of the transform tree for mobile robots.
+      // 2. base_footprint is the root of the transform tree for turtlebot and walking robots.
+      // 3. Some robots have both base_link and base_footprint defined.
+      // 4. If both are defined, we use base_link.
+      // 5. If neither are defined, we throw an error.
+
+      // for issue https://github.com/ms-iot/vscode-ros/issues/939,
+      // Base_footprint is an orphan tree, so applying our root transform to convert to babylon coordinate system won't work.
+      // We need to apply the transform to the base_link instead.
+
+      let base = this.links.get("base_link");
+
+      if (base == null || base == undefined) {
+        base = this.links.get("base_footprint");
       }
 
       if (base == undefined) {
