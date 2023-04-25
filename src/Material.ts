@@ -1,5 +1,4 @@
 import * as BABYLON from 'babylonjs';
-import * as Materials from 'babylonjs-materials';
 
 export class Material {
     public name : string = "default";
@@ -25,7 +24,7 @@ export class Material {
             m.alpha = this.color.a;
             this.material = m;
         } else {
-            this.material = new Materials.SimpleMaterial(this.name, scene);
+            this.material = new BABYLON.StandardMaterial(this.name, scene);
         }
         if (this.material) {
             this.material.backFaceCulling = false;

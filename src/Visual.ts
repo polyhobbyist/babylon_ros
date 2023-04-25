@@ -1,6 +1,6 @@
 import * as BABYLON from 'babylonjs';
 import { Material } from './Material';
-
+import * as Util from './util';
 import {IGeometry} from './IGeometry';
 
 export class Visual {
@@ -18,8 +18,7 @@ export class Visual {
 
         this.transform = new BABYLON.TransformNode("visual_" + this.name, scene);
         this.transform.position = this.origin;
-        // Babylon.JS coordinate system to ROS transform
-        this.transform.rotation = this.rpy;
+        Util.applyRotationToTransform(this.transform, this.rpy);
 
         let mat = this.material;
         if (this.material != undefined) {

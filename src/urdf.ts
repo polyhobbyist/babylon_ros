@@ -163,7 +163,7 @@ export async function deserializeUrdfToRobot(urdfString: string) : Promise<Robot
 
     let robot = new Robot();
 
-    robot.name = urdf.robot.$.name;
+    robot.name = urdf.robot.$?.name;
 
     if (urdf.robot.material instanceof Array) {
       for (let material of urdf.robot.material) {

@@ -1,5 +1,4 @@
 import * as BABYLON from 'babylonjs';
-import 'babylonjs-loaders';
 import { IGeometry } from "./IGeometry";
 import { Material } from "./Material";
 import path from 'path';
