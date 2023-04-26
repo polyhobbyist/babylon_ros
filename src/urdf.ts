@@ -125,8 +125,8 @@ export async function deserializeJoint(jointObject: any) : Promise<Joint> {
     if ((joint.type == JointType.Prismatic ||
         joint.type == JointType.Revolute) &&
         (jointObject.limit?.length == 0 ||
-          jointObject.limit.$.effort == undefined ||
-          jointObject.limit.$.velocity == undefined)) {
+          jointObject.limit[0].$.effort == undefined ||
+          jointObject.limit[0].$.velocity == undefined)) {
       throw new Error(`a Prismatic or Revolute Joint ${jointObject.$?.name} must specify effort and velocity.`);
     }
 

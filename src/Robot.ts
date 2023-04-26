@@ -31,12 +31,15 @@ export class Robot {
         link.create(scene, this.materials);
       }
 
+      for (let [name, joint] of this.joints) {
+        joint.create(scene, this.materials);
+      }
+
       // NOTES:
       // 1. The base_link is the root of the transform tree for mobile robots.
       // 2. base_footprint is the root of the transform tree for turtlebot and walking robots.
-      // 3. Some robots have both base_link and base_footprint defined.
-      // 4. If both are defined, we use base_link.
-      // 5. If neither are defined, we throw an error.
+      // 3. All link transforms with no parent will be parented to this.transform.
+
 
       // for issue https://github.com/ms-iot/vscode-ros/issues/939,
       // Base_footprint is an orphan tree, so applying our root transform to convert to babylon coordinate system won't work.
@@ -50,13 +53,7 @@ export class Robot {
 
       if (base == undefined) {
         throw new Error("No base_link or base_footprint defined in this robot");
-      } else if (base.transform) {
-        base.transform.parent = this.transform;
-      }
-
-      for (let [name, joint] of this.joints) {
-        joint.create(scene, this.materials);
-      }
+      } 
 
       // Fixup transform tree
       for (let [name, joint] of this.joints) {
@@ -77,6 +74,13 @@ export class Robot {
           } else {
             // TODO: Is this a bug?
           }
+        }
+      }
+
+      for (let [name, link] of this.links) {
+        if (link.transform != undefined && 
+            link.transform.parent == undefined) {
+          link.transform.parent = this.transform;
         }
       }
     }

@@ -1,4 +1,5 @@
 import * as BABYLON from 'babylonjs';
+import 'babylonjs-loaders';
 import { IGeometry } from "./IGeometry";
 import { Material } from "./Material";
 import path from 'path';
@@ -24,6 +25,7 @@ export class Mesh implements IGeometry {
                 this.transform != undefined) {
                 this.mesh.parent = this.transform;
                 this.mesh.scaling = this.scale;
+                this.mesh.rotation = new BABYLON.Vector3(Math.PI/2, 0, 0);
             }
         }
     }
@@ -31,8 +33,6 @@ export class Mesh implements IGeometry {
 
     public create(scene: BABYLON.Scene) : void {
         this.transform = new BABYLON.TransformNode("mesh_mesh", scene);
-        // Babylon.JS coordinate system to ROS transform
-        this.transform.rotation = new BABYLON.Vector3(Math.PI/2, 0, 0);
 
         if (this.uri.startsWith("file://"))
         {
