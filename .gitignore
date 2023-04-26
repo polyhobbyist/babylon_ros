@@ -1,3 +1,5 @@
+web/*.js*
+
 # Logs
 logs
 *.log

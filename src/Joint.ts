@@ -1,6 +1,7 @@
 import * as BABYLON from 'babylonjs';
 import {Link} from './Link';
 import { Material } from './Material';
+import * as Util from './util';
 
 export enum JointType {
     Fixed = "fixed",
@@ -36,7 +37,7 @@ export class Joint {
 
         this.transform = new BABYLON.TransformNode("joint_" + this.name, scene);
         this.transform.position = this.origin;
-        this.transform.rotation = this.rpy;
+        Util.applyRotationToTransform(this.transform, this.rpy);
     }
 
     public dispose() : void {

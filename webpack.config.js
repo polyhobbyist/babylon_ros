@@ -1,9 +1,10 @@
 const path = require("path");
 
-module.exports = {
+/** @type WebpackConfig */
+const webConfig = {
     entry: './src/ros.ts',
     output: {
-        path: path.resolve(__dirname, 'dist'),
+        path: path.resolve(__dirname, 'web'),
         filename: 'ros.js',
         globalObject: 'this',
         library: {
@@ -34,13 +35,27 @@ module.exports = {
             }]
     
         }]
-    },
+    }
+}
+
+const appConfig = {
+    ...webConfig,
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'ros.js',
+        globalObject: 'this',
+        library: {
+            name: 'babylon_ros',
+            type: 'umd'
+        }
+    },    
     externals: {
         babylonjs: {
             commonjs: 'babylonjs',
             commonjs2: 'babylonjs',
             amd: 'babylonjs',
-            root: '_',
+            root: '_'
         },
-    }
-}
+    }} 
+
+module.exports = [webConfig, appConfig]

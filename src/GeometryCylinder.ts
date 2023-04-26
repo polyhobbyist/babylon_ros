@@ -17,8 +17,6 @@ export class Cylinder implements IGeometry {
     
     public create(scene: BABYLON.Scene) : void {
         this.transform = new BABYLON.TransformNode("mesh_cylinder", scene);
-      // Babylon.JS cylinder has the flat sides on the XZ plane, where ROS is on the XY plane
-      this.transform.rotation.x =  -Math.PI/2;
 
         this.mesh = BABYLON.MeshBuilder.CreateCylinder("cylinder", 
             {
@@ -27,7 +25,8 @@ export class Cylinder implements IGeometry {
             }, scene);
 
         this.mesh.parent = this.transform;
-    }
+        this.mesh.addRotation(Math.PI / 2.0, 0, 0);
+     }
     public dispose() : void {
         this.mesh?.dispose();
         this.transform?.dispose();

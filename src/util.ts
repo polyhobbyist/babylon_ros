@@ -14,7 +14,7 @@ export function parseRPY(rpy: string) : BABYLON.Vector3 {
   let v = parseVector(rpy);
 
   // ROS is Roll, Pitch, Yaw - BABYLON Vector is Pitch, Yaw, Roll
-  return new BABYLON.Vector3(v.z, v.x, v.y);
+  return new BABYLON.Vector3(v.x, v.y, v.z);
 }
 
 export function parseColor(color: string) : BABYLON.Color4 {
@@ -25,4 +25,9 @@ export function parseColor(color: string) : BABYLON.Color4 {
   }
 
   return new BABYLON.Color4(parseFloat(rgba[0]), parseFloat(rgba[1]), parseFloat(rgba[2]), parseFloat(rgba[3]));
+}
+
+export function applyRotationToTransform(transformNode : BABYLON.TransformNode, vec: BABYLON.Vector3) {
+
+  transformNode.addRotation(vec.x, 0, 0).addRotation(0, vec.y, 0).addRotation(0, 0, vec.z);
 }
