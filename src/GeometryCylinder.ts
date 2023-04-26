@@ -25,6 +25,7 @@ export class Cylinder implements IGeometry {
             }, scene);
 
         this.mesh.parent = this.transform;
+        this.mesh.addRotation(Math.PI / 2.0, 0, 0);
      }
     public dispose() : void {
         this.mesh?.dispose();
