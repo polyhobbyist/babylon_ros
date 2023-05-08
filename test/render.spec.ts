@@ -6,7 +6,7 @@ import {deserializeUrdfToRobot, deserializeMaterial, parseUrdf} from '../src/urd
 import { Cylinder } from '../src/GeometryCylinder';
 import {loadRobot} from './testutil';
 
-let engine = undefined;
+let engine : BABYLON.Engine | undefined = undefined;
 let scene : BABYLON.Scene | undefined = undefined;
 
 beforeAll(() => {

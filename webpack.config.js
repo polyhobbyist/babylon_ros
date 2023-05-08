@@ -56,6 +56,12 @@ const appConfig = {
             amd: 'babylonjs',
             root: '_'
         },
+        '@lookingglass/webxr': {
+            commonjs: '@lookingglass/webxr',
+            commonjs2: '@lookingglass/webxr',
+            amd: '@lookingglass/webxr',
+            root: '_'
+        },
     }} 
 
 module.exports = [webConfig, appConfig]

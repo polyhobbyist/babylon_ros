@@ -8,7 +8,12 @@
       "type": "msedge",
       "request": "launch",
       "name": "Open viewer.html",
-      "file": "c:\\ws\\babylon_ros\\web\\viewer.html"
+      "file": "${workspaceFolder}/web/viewer.html",
+      "runtimeArgs": [
+        "--disable-web-security",
+        "--user-data-dir=${workspaceFolder}/web/user",
+        "--allow-running-insecure-content",
+      ],
     }
   ]
 }

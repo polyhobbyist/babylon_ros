@@ -7,7 +7,7 @@ import { Cylinder } from '../src/GeometryCylinder';
 import { Robot } from '../src/Robot';
 import {loadRobot} from './testutil';
 
-let engine = undefined;
+let engine : BABYLON.Engine | undefined = undefined;
 let scene : BABYLON.Scene | undefined = undefined;
 
 beforeAll(() => {
