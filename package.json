@@ -47,7 +47,7 @@
   "dependencies": {
     "@types/xml2js": "^0.4.11",
     "babylonjs": "^5.53.0",
-    "babylonjs-gui": "^5.53.0",
+    "babylonjs-gui": "^5.57.1",
     "babylonjs-loaders": "^5.53.0",
     "babylonjs-materials": "^5.53.0",
     "babylonjs-viewer": "^5.53.0",
