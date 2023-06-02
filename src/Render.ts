@@ -4,60 +4,41 @@ import * as urdf from './urdf';
 import {Robot} from './Robot';
 import * as GUI from 'babylonjs-gui';
 
-function applyAxisToTransform(scene : BABYLON.Scene, t : BABYLON.TransformNode | undefined) : BABYLON.AxesViewer | undefined {
-  if (t) {
-    let a = new BABYLON.AxesViewer(scene, .1);
-    a.xAxis.parent = t;
-    a.yAxis.parent = t;
-    a.zAxis.parent = t;
-
-    return a;
-  }
-
-  return undefined;
-}
-
-function applyAxisToLink(scene : BABYLON.Scene, robot : Robot, l : string) {
-  let r = robot.links.get(l);
-  if (r && r.visuals[0].transform) {
-    applyAxisToTransform(scene, r.visuals[0].transform);
-  }
-}
-
-function applyAxisToJoint(scene : BABYLON.Scene, robot : Robot, j : string) {
-  let r = robot.joints.get(j);
-  if (r && r.transform) {
-    applyAxisToTransform(scene, r.transform);
-  }
-}
-
 var statusLabel = new GUI.TextBlock();
-
 let axisList : BABYLON.PositionGizmo[] = [];
 
-function toggleAxisOnRobot(scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer,robot : Robot) {
+function addAxisToTransform(scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer, transform : BABYLON.TransformNode | undefined) {
+  if (transform) {
+    let axis = new BABYLON.PositionGizmo(layer);
+    axis.scaleRatio = 0.5
+    axis.attachedNode = transform;
+    axisList.push(axis);
+
+    let drag = () => {
+      if (transform) {
+      statusLabel.text = transform.name + "\nX: " + transform.position.x + "\nY: " + transform.position.y + "\nZ: " + transform.position.z;
+      statusLabel.linkOffsetY = -100;
+      statusLabel.linkWithMesh(transform);
+      }
+    }
+
+    axis.xGizmo.dragBehavior.onDragObservable.add(drag);
+    axis.yGizmo.dragBehavior.onDragObservable.add(drag);
+    axis.zGizmo.dragBehavior.onDragObservable.add(drag);
+      
+  }
+}
+
+function toggleAxisOnRobot(scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer, robot : Robot) {
 
   if (axisList.length == 0) {
     robot.joints.forEach((j) => {
-        if (j.transform) {
-          let axis = new BABYLON.PositionGizmo(layer);
-          axis.scaleRatio = 0.5
-          axis.attachedNode = j.transform;
-          axisList.push(axis);
-
-          let drag = () => {
-            if (j.transform) {
-            statusLabel.text = j.transform.name + "\nX: " + j.transform.position.x + "\nY: " + j.transform.position.y + "\nZ: " + j.transform.position.z;
-            statusLabel.linkOffsetY = -100;
-            statusLabel.linkWithMesh(j.transform);
-            }
-          }
-  
-          axis.xGizmo.dragBehavior.onDragObservable.add(drag);
-          axis.yGizmo.dragBehavior.onDragObservable.add(drag);
-          axis.zGizmo.dragBehavior.onDragObservable.add(drag);
-            
-        }
+      addAxisToTransform(scene, layer, j.transform);
+    });
+    robot.links.forEach((l) => {
+      l.visuals.forEach((v) => {
+        addAxisToTransform(scene, layer, l.transform);
+      });
     });
   } else {
     axisList.forEach((a) => {
@@ -69,27 +50,38 @@ function toggleAxisOnRobot(scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRen
 
 let rotationGizmos : BABYLON.RotationGizmo[] = [];
 
+function addRotationToTransform(scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer, transform : BABYLON.TransformNode | undefined) {
+  if (transform) {
+    let rotationGizmo = new BABYLON.RotationGizmo(layer);
+    rotationGizmo.scaleRatio = 0.5
+    rotationGizmo.attachedNode = transform;
+    rotationGizmos.push(rotationGizmo);
+
+    let drag = () => {
+      if (transform) {
+      statusLabel.text = transform.name + "\nR:" + transform.rotation.x + "\nP:" + transform.rotation.y + "\nY:" + transform.rotation.z;
+      statusLabel.linkOffsetY = -100;
+      statusLabel.linkWithMesh(transform);
+      }
+    }
+
+    rotationGizmo.xGizmo.dragBehavior.onDragObservable.add(drag);
+    rotationGizmo.yGizmo.dragBehavior.onDragObservable.add(drag);
+    rotationGizmo.zGizmo.dragBehavior.onDragObservable.add(drag);
+  }
+
+}
+
 function toggleAxisRotationOnRobot(ui: GUI.AdvancedDynamicTexture, scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer, robot : Robot) {
   if (rotationGizmos.length == 0) {
     robot.joints.forEach((j) => {
-      if (j.transform) {
-        let rotationGizmo = new BABYLON.RotationGizmo(layer);
-        rotationGizmo.scaleRatio = 0.5
-        rotationGizmo.attachedNode = j.transform;
-        rotationGizmos.push(rotationGizmo);
+      addRotationToTransform(scene, layer, j.transform);
+    });
 
-        let drag = () => {
-          if (j.transform) {
-          statusLabel.text = j.transform.name + "\nR:" + j.transform.rotation.x + "\nP:" + j.transform.rotation.y + "\nY:" + j.transform.rotation.z;
-          statusLabel.linkOffsetY = -100;
-          statusLabel.linkWithMesh(j.transform);
-          }
-        }
-
-        rotationGizmo.xGizmo.dragBehavior.onDragObservable.add(drag);
-        rotationGizmo.yGizmo.dragBehavior.onDragObservable.add(drag);
-        rotationGizmo.zGizmo.dragBehavior.onDragObservable.add(drag);
-      }
+    robot.links.forEach((l) => {
+      l.visuals.forEach((v) => {
+        addRotationToTransform(scene, layer, v.transform);
+      });
     });
   } else {
     rotationGizmos.forEach((a) => {
@@ -210,17 +202,12 @@ async function RenderMain() {
     <material name="red">
       <color rgba=".8 0 0 1"/>
     </material>
-    
-    <material name="purple">
-      <color rgba=".8 0 .8 1"/>
-    </material>
   
     <link name="base_link">
       <visual>
         <geometry>
           <mesh filename="https://raw.githubusercontent.com/polyhobbyist/bb_description/main/meshes/dome.stl" scale="0.001 0.001 0.001" />
         </geometry>
-        <material name="purple"/>
       </visual>
     </link>
   
