@@ -11,6 +11,7 @@ export class Mesh implements IGeometry {
 
     public mesh: BABYLON.AbstractMesh | undefined = undefined;
     public transform : BABYLON.TransformNode | undefined = undefined;
+    public material : Material | undefined = undefined;
 
     constructor(uri: string, scale: BABYLON.Vector3) {
         this.uri = uri;
@@ -26,13 +27,17 @@ export class Mesh implements IGeometry {
                 this.mesh.parent = this.transform;
                 this.mesh.scaling = this.scale;
                 this.mesh.rotation = new BABYLON.Vector3(Math.PI/2, 0, 0);
+                if (this.material != undefined && this.material.material != undefined) {
+                    this.mesh.material = this.material.material;
+                }
             }
         }
     }
 
 
-    public create(scene: BABYLON.Scene) : void {
+    public create(scene: BABYLON.Scene, mat : Material | undefined) : void {
         this.transform = new BABYLON.TransformNode("mesh_mesh", scene);
+        this.material = mat;
 
         if (this.uri.startsWith("file://"))
         {

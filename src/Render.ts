@@ -210,12 +210,17 @@ async function RenderMain() {
     <material name="red">
       <color rgba=".8 0 0 1"/>
     </material>
+    
+    <material name="purple">
+      <color rgba=".8 0 .8 1"/>
+    </material>
   
     <link name="base_link">
       <visual>
         <geometry>
           <mesh filename="https://raw.githubusercontent.com/polyhobbyist/bb_description/main/meshes/dome.stl" scale="0.001 0.001 0.001" />
         </geometry>
+        <material name="purple"/>
       </visual>
     </link>
   

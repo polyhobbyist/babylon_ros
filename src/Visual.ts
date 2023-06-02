@@ -16,7 +16,7 @@ export class Visual {
 
     public create(scene: BABYLON.Scene, materialMap : Map<string, Material>) : void {
 
-        this.transform = new BABYLON.TransformNode("visual_" + this.name, scene);
+        this.transform = new BABYLON.TransformNode(this.name, scene);
         this.transform.position = this.origin;
         Util.applyRotationToTransform(this.transform, this.rpy);
 
@@ -30,17 +30,11 @@ export class Visual {
         }
 
         if (this.geometry != undefined) {
-            this.geometry.create(scene);
-
-            if (mat?.material != undefined && this.geometry?.mesh != undefined) {
-                this.geometry.mesh.material = mat.material;
-            }
+            this.geometry.create(scene, mat);
 
             if (this.transform  != undefined && this.geometry.transform != undefined) {
                 this.geometry.transform.parent = this.transform;
             }
-
-
         }
     }
 
