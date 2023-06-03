@@ -29,5 +29,5 @@ export function parseColor(color: string) : BABYLON.Color4 {
 
 export function applyRotationToTransform(transformNode : BABYLON.TransformNode, vec: BABYLON.Vector3) {
 
-  transformNode.addRotation(vec.x, 0, 0).addRotation(0, vec.y, 0).addRotation(0, 0, vec.z);
+  transformNode.addRotation(0, vec.y, 0).addRotation(vec.x, 0, 0).addRotation(0, 0, vec.z);
 }

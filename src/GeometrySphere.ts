@@ -14,7 +14,7 @@ export class Sphere implements IGeometry {
         this.radius = r;
     }
     
-    public create(scene: BABYLON.Scene) : void {
+    public create(scene: BABYLON.Scene, mat : Material | undefined) : void {
         this.transform = new BABYLON.TransformNode("mesh_sphere", scene);
 
         this.mesh = BABYLON.MeshBuilder.CreateSphere("sphere", 
@@ -23,7 +23,11 @@ export class Sphere implements IGeometry {
             }, scene);
 
         this.mesh.parent = this.transform;
+        if (mat != undefined && mat.material != undefined) {
+            this.mesh.material = mat.material;
+        }
     }
+
     public dispose() : void {
         this.mesh?.dispose();
         this.transform?.dispose();

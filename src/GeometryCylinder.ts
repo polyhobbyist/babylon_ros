@@ -15,7 +15,7 @@ export class Cylinder implements IGeometry {
         this.radius = r;
     }
     
-    public create(scene: BABYLON.Scene) : void {
+    public create(scene: BABYLON.Scene, mat : Material | undefined) : void {
         this.transform = new BABYLON.TransformNode("mesh_cylinder", scene);
 
         this.mesh = BABYLON.MeshBuilder.CreateCylinder("cylinder", 
@@ -26,6 +26,9 @@ export class Cylinder implements IGeometry {
 
         this.mesh.parent = this.transform;
         this.mesh.addRotation(Math.PI / 2.0, 0, 0);
+        if (mat != undefined && mat.material != undefined) {
+            this.mesh.material = mat.material;
+        }
      }
     public dispose() : void {
         this.mesh?.dispose();

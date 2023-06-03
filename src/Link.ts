@@ -15,7 +15,7 @@ export class Link {
     // public collisions : Visual | undefined = undefined;
 
     public create(scene: BABYLON.Scene, materialMap : Map<string, Material>) {
-        this.transform = new BABYLON.TransformNode("link_" + this.name, scene);
+        this.transform = new BABYLON.TransformNode(this.name, scene);
 
         if (this.visuals.length > 0) {
             for (let visual of this.visuals) {
