@@ -16,7 +16,10 @@ function addAxisToTransform(scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRe
 
     let drag = () => {
       if (transform) {
-      statusLabel.text = transform.name + "\nX: " + transform.position.x + "\nY: " + transform.position.y + "\nZ: " + transform.position.z;
+      statusLabel.text = transform.name + 
+      "\nX: " + transform.position.x.toFixed(5) + 
+      "\nY: " + transform.position.y.toFixed(5) + 
+      "\nZ: " + transform.position.z.toFixed(5);
       statusLabel.linkOffsetY = -100;
       statusLabel.linkWithMesh(transform);
       }
@@ -59,7 +62,10 @@ function addRotationToTransform(scene : BABYLON.Scene, layer: BABYLON.UtilityLay
 
     let drag = () => {
       if (transform) {
-      statusLabel.text = transform.name + "\nR:" + transform.rotation.x + "\nP:" + transform.rotation.y + "\nY:" + transform.rotation.z;
+      statusLabel.text = transform.name + 
+      "\nR:" + transform.rotation.x.toFixed(5) + 
+      "\nP:" + transform.rotation.y.toFixed(5) + 
+      "\nY:" + transform.rotation.z.toFixed(5);
       statusLabel.linkOffsetY = -100;
       statusLabel.linkWithMesh(transform);
       }
@@ -193,7 +199,7 @@ function createUI(scene : BABYLON.Scene, robot : Robot) {
 
 }
 // Main function that gets executed once the webview DOM loads
-async function RenderMain() {
+export async function RenderMain() {
 
   let u = /*xml*/ 
   `<?xml version="1.0"?>
@@ -292,7 +298,7 @@ async function RenderMain() {
   const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement; // Get the canvas element
   const engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
   let scene = await createScene(engine, canvas);
-  scene.debugLayer.show();
+  //scene.debugLayer.show();
 
   let robot = await applyURDF(scene, u);
 
@@ -314,9 +320,3 @@ async function RenderMain() {
   
   
 }
-
-  // Just like a regular webpage we need to wait for the webview
-  // DOM to load before we can reference any of the HTML elements
-  // or toolkit components
-  window.addEventListener("load", RenderMain);
-  
