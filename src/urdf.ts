@@ -9,7 +9,7 @@ import { Material } from './Material';
 import { Cylinder } from './GeometryCylinder';
 import { Sphere } from './GeometrySphere';
 import { Box } from './GeometryBox';
-import { Mesh } from './Mesh';
+import { Mesh } from './GeometryMesh';
 import {parseVector, parseRPY, parseColor } from './util';
 
 export async function parseUrdf(urdf: string) : Promise<any> {

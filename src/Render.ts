@@ -229,7 +229,7 @@ export async function RenderMain() {
     <joint name="dome_to_camera_joint" type="fixed">
       <parent link="base_link"/>
       <child link="camera_link"/>
-      <origin xyz="0 0.12 0.08" rpy="2.093 0 0"/>
+      <origin xyz="0 0.12 0.08" rpy="-1.047198 -0.125826 -3.047137"/>
     </joint>
   
     <link name="front_depth_link">
@@ -244,7 +244,7 @@ export async function RenderMain() {
     <joint name="dome_to_front_depth_joint" type="fixed">
       <parent link="base_link"/>
       <child link="front_depth_link"/>
-      <origin xyz="0 0.11 0.09" rpy="2.093 0 0"/>
+      <origin xyz="0 0.11 0.09" rpy="-1.047198 0 3.14159"/>
     </joint>
   
     <link name="left_depth_link">
@@ -259,7 +259,7 @@ export async function RenderMain() {
     <joint name="dome_to_left_depth_joint" type="fixed">
       <parent link="base_link"/>
       <child link="left_depth_link"/>
-      <origin xyz="0.11693 -0.067 0.05" rpy="1.047198 0.959931 0.436332"/>
+      <origin xyz="0.122 -0.0715 0.008" rpy="1.15863 1.74874 0"/>
     </joint>
   
     <link name="right_depth_link">
@@ -274,7 +274,7 @@ export async function RenderMain() {
     <joint name="dome_to_right_depth_joint" type="fixed">
       <parent link="base_link"/>
       <child link="right_depth_link"/>
-      <origin xyz="-0.11693 -0.067 0.05" rpy="1.047198 -0.959931 -0.436332"/>
+      <origin xyz="-0.122 -0.0715 0.008" rpy="0.49281 -1.51029 3.14159"/>
     </joint>
   
   

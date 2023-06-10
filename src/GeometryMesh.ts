@@ -26,7 +26,7 @@ export class Mesh implements IGeometry {
                 this.transform != undefined) {
                 this.mesh.parent = this.transform;
                 this.mesh.scaling = this.scale;
-                this.mesh.rotation = new BABYLON.Vector3(Math.PI/2, 0, 0);
+                this.mesh.addRotation(0, 0, Math.PI).addRotation(Math.PI/2, 0, 0);
                 if (this.material != undefined && this.material.material != undefined) {
                     this.mesh.material = this.material.material;
                 }
