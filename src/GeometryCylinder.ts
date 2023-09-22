@@ -7,7 +7,7 @@ export class Cylinder implements IGeometry {
     public radius : number = 0;
 
 
-    public mesh: BABYLON.AbstractMesh | undefined = undefined;
+    public meshes: BABYLON.AbstractMesh[] = [];
     public transform : BABYLON.TransformNode | undefined;
 
     constructor(l : number, r: number) {
@@ -18,20 +18,24 @@ export class Cylinder implements IGeometry {
     public create(scene: BABYLON.Scene, mat : Material | undefined) : void {
         this.transform = new BABYLON.TransformNode("mesh_cylinder", scene);
 
-        this.mesh = BABYLON.MeshBuilder.CreateCylinder("cylinder", 
+        this.meshes.push(BABYLON.MeshBuilder.CreateCylinder("cylinder", 
             {
                 diameter: this.radius * 2.0,
                 height: this.length
-            }, scene);
+            }, scene));
 
-        this.mesh.parent = this.transform;
-        this.mesh.addRotation(Math.PI / 2.0, 0, 0);
+        this.meshes[0].parent = this.transform;
+        this.meshes[0].addRotation(Math.PI / 2.0, 0, 0);
         if (mat != undefined && mat.material != undefined) {
-            this.mesh.material = mat.material;
+            this.meshes[0].material = mat.material;
         }
      }
     public dispose() : void {
-        this.mesh?.dispose();
+        if (this.meshes != undefined) {
+            this.meshes.forEach(m => {
+                m.dispose();
+            });
+        }
         this.transform?.dispose();
     }
 }

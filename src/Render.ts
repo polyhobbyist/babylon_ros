@@ -108,7 +108,7 @@ var createScene = async function (engine : BABYLON.Engine, canvas : HTMLCanvasEl
   scene.useRightHandedSystem = true;
   scene.clearColor = new BABYLON.Color4(0.4, 0.4, 0.4, 1.0);// TODO (polyhobbyist) Make this configurable
 
-  var radius = 30; // TODO (polyhobbyist): make this configurable
+  var radius = 10; // TODO (polyhobbyist): make this configurable
 
   // This creates and positions a free camera (non-mesh)
   var camera = new BABYLON.ArcRotateCamera("camera1", - Math.PI / 3, 5 * Math.PI / 12, radius, new BABYLON.Vector3(0, 0, 0), scene);
@@ -217,7 +217,7 @@ export async function RenderMain() {
     <link name="base_link">
       <visual>
         <geometry>
-          <mesh filename="https://raw.githubusercontent.com/polyhobbyist/babylon-collada-loader/main/test/testdata/leo.dae" scale="0.001 0.001 0.001" />
+          <mesh filename="https://raw.githubusercontent.com/polyhobbyist/babylon-collada-loader/main/test/testdata/Chassis.dae" scale="1 1 1" />
         </geometry>
       </visual>
     </link>
@@ -227,7 +227,7 @@ export async function RenderMain() {
   const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement; // Get the canvas element
   const engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
   let scene = await createScene(engine, canvas);
-  //scene.debugLayer.show();
+  scene.debugLayer.show();
 
   let robot = await applyURDF(scene, u);
 
