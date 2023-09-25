@@ -3,7 +3,7 @@
   <link name="base_link">
     <visual>
       <geometry>
-        <mesh filename="file://../test/testdata/xyz_cube.stl" />
+        <mesh filename="https://raw.githubusercontent.com/polyhobbyist/babylon_ros/ea736e27ccd4df44096bc5c05bacaf5171c6b86a/test/testdata/xyz_cybe.stl" />
       </geometry>
     </visual>
   </link>

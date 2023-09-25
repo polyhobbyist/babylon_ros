@@ -22,16 +22,13 @@ export class Mesh implements IGeometry {
         // Get a pointer to the mesh
         if (meshes.length > 0 && this.transform != undefined) {
             this.meshes = meshes;
+            this.meshes[0].parent = this.transform;
 
             // find the top level bone in skeletons
             if (skeletons != undefined && skeletons.length > 0) {
                 let rootBone = skeletons[0].bones.find(b => b.getParent() == undefined);
                 if (rootBone != undefined) {
-                    let t = rootBone.getTransformNode();
-                    if (t != undefined) {
-                        t.parent = this.transform;
-                        //t.addRotation(0, 0, Math.PI).addRotation(Math.PI/2, 0, 0);
-                    }
+                    rootBone.returnToRest();
                 }
             } else {
 
@@ -39,7 +36,7 @@ export class Mesh implements IGeometry {
                     if (this.transform != undefined) {
                         m.addRotation(0, 0, Math.PI).addRotation(Math.PI/2, 0, 0);
                         m.parent = this.transform;
-                        m.scaling = this.scale;
+                        
                         if (this.material != undefined && this.material.material != undefined) {
                             m.material = this.material.material;
                         }
@@ -52,12 +49,14 @@ export class Mesh implements IGeometry {
 
     public create(scene: BABYLON.Scene, mat : Material | undefined) : void {
         this.transform = new BABYLON.TransformNode("mesh_mesh", scene);
+        this.transform.scaling = this.scale;
+
         this.material = mat;
 
         if (this.uri.startsWith("file://"))
         {
             // Handle relative paths
-            var filePath = this.uri.substring(7);
+            var filePath = this.uri.substring(7); 
             if (!filePath.startsWith("/")) {
                 filePath = path.join(__dirname, filePath);
             }
