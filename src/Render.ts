@@ -3,6 +3,7 @@ import * as Materials from 'babylonjs-materials';
 import * as urdf from './urdf';
 import {Robot} from './Robot';
 import * as GUI from 'babylonjs-gui';
+import * as ColladaFileLoader from '@polyhobbyist/babylon-collada-loader';
 
 var statusLabel = new GUI.TextBlock();
 let axisList : BABYLON.PositionGizmo[] = [];
@@ -99,18 +100,22 @@ function toggleAxisRotationOnRobot(ui: GUI.AdvancedDynamicTexture, scene : BABYL
 
 var createScene = async function (engine : BABYLON.Engine, canvas : HTMLCanvasElement) : Promise<BABYLON.Scene>{
   let scene = new BABYLON.Scene(engine);
+  if (BABYLON.SceneLoader) {
+    //Add this loader into the register plugin
+    BABYLON.SceneLoader.RegisterPlugin(new ColladaFileLoader.DAEFileLoader());
+  }
 
   scene.useRightHandedSystem = true;
-  scene.clearColor = BABYLON.Color4.FromColor3(BABYLON.Color3.Black());// TODO (polyhobbyist) Make this configurable
+  scene.clearColor = new BABYLON.Color4(0.4, 0.4, 0.4, 1.0);// TODO (polyhobbyist) Make this configurable
 
-  var radius = 1; // TODO (polyhobbyist): make this configurable
+  var radius = 10; // TODO (polyhobbyist): make this configurable
 
   // This creates and positions a free camera (non-mesh)
   var camera = new BABYLON.ArcRotateCamera("camera1", - Math.PI / 3, 5 * Math.PI / 12, radius, new BABYLON.Vector3(0, 0, 0), scene);
   camera.wheelDeltaPercentage = 0.01;
   camera.minZ = 0.1;
 
-  const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+  const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 20, 20), scene);
 
   // This attaches the camera to the canvas
   camera.attachControl(canvas, true);
@@ -229,7 +234,7 @@ export async function RenderMain() {
     <joint name="dome_to_camera_joint" type="fixed">
       <parent link="base_link"/>
       <child link="camera_link"/>
-      <origin xyz="0 0.12 0.08" rpy="-1.047198 -0.125826 -3.047137"/>
+      <origin xyz="0 0.12 0.08" rpy="2.093 0 0"/>
     </joint>
   
     <link name="front_depth_link">
@@ -244,7 +249,7 @@ export async function RenderMain() {
     <joint name="dome_to_front_depth_joint" type="fixed">
       <parent link="base_link"/>
       <child link="front_depth_link"/>
-      <origin xyz="0 0.11 0.09" rpy="-1.047198 0 3.14159"/>
+      <origin xyz="0 0.11 0.09" rpy="2.093 0 0"/>
     </joint>
   
     <link name="left_depth_link">
@@ -259,7 +264,7 @@ export async function RenderMain() {
     <joint name="dome_to_left_depth_joint" type="fixed">
       <parent link="base_link"/>
       <child link="left_depth_link"/>
-      <origin xyz="0.122 -0.0715 0.008" rpy="1.15863 1.74874 0"/>
+      <origin xyz="0.11693 -0.067 0.05" rpy="1.047198 0.959931 0.436332"/>
     </joint>
   
     <link name="right_depth_link">
@@ -274,7 +279,7 @@ export async function RenderMain() {
     <joint name="dome_to_right_depth_joint" type="fixed">
       <parent link="base_link"/>
       <child link="right_depth_link"/>
-      <origin xyz="-0.122 -0.0715 0.008" rpy="0.49281 -1.51029 3.14159"/>
+      <origin xyz="-0.11693 -0.067 0.05" rpy="1.047198 -0.959931 -0.436332"/>
     </joint>
   
   
@@ -293,12 +298,12 @@ export async function RenderMain() {
     </joint>
   
   </robot>
-  `;
+    `;
   
   const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement; // Get the canvas element
   const engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
   let scene = await createScene(engine, canvas);
-  //scene.debugLayer.show();
+  scene.debugLayer.show();
 
   let robot = await applyURDF(scene, u);
 

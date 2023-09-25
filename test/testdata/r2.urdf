@@ -169,8 +169,7 @@
     <visual>
       <origin rpy="0.0 0 0" xyz="0 0 0"/>
       <geometry>
-        <!-- mesh filename="package://urdf_tutorial/meshes/l_finger.dae"/ -->
-          <cylinder length="0.1" radius="0.035"/>
+        <mesh filename="https://raw.githubusercontent.com/ros/urdf_tutorial/ros1/meshes/l_finger.dae"/>
       </geometry>
     </visual>
   </link>
@@ -184,8 +183,7 @@
     <visual>
       <origin rpy="0.0 0 0" xyz="0.09137 0.00495 0"/>
       <geometry>
-        <!-- mesh filename="package://urdf_tutorial/meshes/l_finger_tip.dae"/ -->
-          <cylinder length="0.1" radius="0.035"/>
+        <mesh filename="https://raw.githubusercontent.com/ros/urdf_tutorial/ros1/meshes/l_finger_tip.dae"/>
       </geometry>
     </visual>
   </link>
@@ -199,8 +197,7 @@
     <visual>
       <origin rpy="-3.1415 0 0" xyz="0 0 0"/>
       <geometry>
-        <!-- mesh filename="package://urdf_tutorial/meshes/l_finger.dae"/ -->
-          <cylinder length="0.1" radius="0.035"/>
+        <mesh filename="https://raw.githubusercontent.com/ros/urdf_tutorial/ros1/meshes/l_finger.dae"/>
       </geometry>
     </visual>
   </link>
@@ -214,8 +211,7 @@
     <visual>
       <origin rpy="-3.1415 0 0" xyz="0.09137 0.00495 0"/>
       <geometry>
-        <!-- mesh filename="package://urdf_tutorial/meshes/l_finger_tip.dae"/ -->
-          <cylinder length="0.1" radius="0.035"/>
+        <mesh filename="https://raw.githubusercontent.com/ros/urdf_tutorial/ros1/meshes/l_finger_tip.dae"/>
       </geometry>
     </visual>
   </link>

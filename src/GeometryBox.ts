@@ -8,7 +8,7 @@ export class Box implements IGeometry {
     public depth : number = 0;
 
 
-    public mesh: BABYLON.Mesh | undefined = undefined;
+    public meshes: BABYLON.Mesh[] = [];
     public transform : BABYLON.TransformNode | undefined;
 
     constructor(x : number, y: number, z: number) {
@@ -26,21 +26,25 @@ export class Box implements IGeometry {
     public create(scene: BABYLON.Scene, mat : Material | undefined) : void {
         this.transform = new BABYLON.TransformNode("mesh_box", scene);
 
-        this.mesh = BABYLON.MeshBuilder.CreateBox("box", 
+        this.meshes.push(BABYLON.MeshBuilder.CreateBox("box", 
             {
                 width: this.width,
                 height: this.height,
                 depth: this.depth,
-            }, scene);
+            }, scene));
 
-        this.mesh.parent = this.transform;
+        this.meshes[0].parent = this.transform;
         if (mat != undefined && mat.material != undefined) {
-            this.mesh.material = mat.material;
+            this.meshes[0].material = mat.material;
         }
     }
     
     public dispose() : void {
-        this.mesh?.dispose();
+        if (this.meshes != undefined) {
+            this.meshes.forEach(m => {
+                m.dispose();
+            });
+        }
         this.transform?.dispose();
     }
 
