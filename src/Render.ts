@@ -192,7 +192,7 @@ var createScene = async function (engine : BABYLON.Engine, canvas : HTMLCanvasEl
   return scene;
 };
 
-async function applyURDF(scene : BABYLON.Scene, urdfText : string) : Promise<Robot | undefined>{
+async function applyURDF(scene : BABYLON.Scene, urdfUrl : string) : Promise<Robot | undefined>{
   if (scene == undefined) {
     return;
   }
@@ -207,6 +207,10 @@ async function applyURDF(scene : BABYLON.Scene, urdfText : string) : Promise<Rob
       currentRobot.dispose();
       currentRobot = undefined;
     }
+
+    // fetch the URDF file from the URL
+    const response = await fetch(urdfUrl);
+    const urdfText = await response.text();
 
     currentRobot = await urdf.deserializeUrdfToRobot(urdfText);
     currentRobot.create(scene);
@@ -238,8 +242,7 @@ function createButton(toolbar: GUI.StackPanel, name : string, text : string, sce
   return button;
 }
 
-
-function createUI(scene : BABYLON.Scene, robot : Robot) {
+function createUI(scene : BABYLON.Scene) {
   var advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
   statusLabel.color = "white";
@@ -282,34 +285,47 @@ function createUI(scene : BABYLON.Scene, robot : Robot) {
   createButton(toolbar, "linkRotationButton", "Link Rotation", scene, () => {  
     toggleAxisRotationOnRobot(false, advancedTexture, scene, utilLayer, currentRobot);
   });
+
+  var testSelection = new GUI.SelectionPanel("tests");
+  testSelection.width = 0.25;
+  testSelection.height = 0.48;
+  testSelection.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+  testSelection.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+
+  advancedTexture.addControl(testSelection);
+
+  var transformGroup = new GUI.CheckboxGroup("Transformation");
+
+
+  var testList = [ 
+    {name: "Arti Robot", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/arti.urdf"},
+    {name: "Basic", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic.urdf"},
+    {name: "Basic Joint", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_joint.urdf"},
+    {name: "Basic Material", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_material.urdf"},
+    {name: "Basic Remote Mesh", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_remote_mesh.urdf"},
+    {name: "Basic with STL", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_stl_mesh.urdf"},
+    {name: "BB", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/bb.urdf"},
+    {name: "Motoman", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/motoman.urdf"},
+    {name: "Orientation", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/orientation.urdf"},
+  ];
+
+
+  testList.forEach((t) => {
+    transformGroup.addCheckbox(t.name, () => {
+      applyURDF(scene, t.url);
+    });
+  });
+
+  testSelection.addGroup(transformGroup);
 }
 // Main function that gets executed once the webview DOM loads
 export async function RenderMain() {
-
-  let u = /*xml*/ 
-  `<?xml version="1.0"?>
-  <robot name="origins">
-    <link name="base_link">
-      <visual>
-        <geometry>
-          <mesh filename="https://raw.githubusercontent.com/IntelRealSense/realsense-ros/ros2-master/realsense2_description/meshes/d435.dae"/>
-        </geometry>
-      </visual>
-    </link>
-  </robot>
-  
-    `;
-  
   const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement; // Get the canvas element
   const engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
   let scene = await createScene(engine, canvas);
   scene.debugLayer.show();
 
-  let robot = await applyURDF(scene, u);
-
-  if (robot != undefined) {
-    createUI(scene, robot);
-  }
+  createUI(scene);
 
   engine.runRenderLoop(function () {
     if (scene != undefined) {
