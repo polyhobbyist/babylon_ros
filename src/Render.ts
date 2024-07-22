@@ -2,26 +2,51 @@ import * as BABYLON from 'babylonjs';
 import * as Materials from 'babylonjs-materials';
 import * as urdf from './urdf';
 import {Robot} from './Robot';
+import {Joint} from './Joint';
+import {Link} from './Link';
+import {Visual} from './Visual';
+
 import * as GUI from 'babylonjs-gui';
 import * as ColladaFileLoader from '@polyhobbyist/babylon-collada-loader';
 
-var statusLabel = new GUI.TextBlock();
-let axisList : BABYLON.PositionGizmo[] = [];
+let ground : BABYLON.GroundMesh | undefined = undefined;
+let camera : BABYLON.ArcRotateCamera | undefined = undefined;
+let currentRobot : Robot | undefined = undefined;
 
-function addAxisToTransform(scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer, transform : BABYLON.TransformNode | undefined) {
+var statusLabel = new GUI.TextBlock();
+let jointAxisList : BABYLON.PositionGizmo[] = [];
+let linkAxisList : BABYLON.PositionGizmo[] = [];
+
+function clearAxisGizmos() {
+  linkAxisList.forEach((a) => {
+    a.dispose();
+  });
+  linkAxisList = [];
+
+  jointAxisList.forEach((a) => {
+    a.dispose();
+  });
+  jointAxisList = [];
+}
+
+function clearStatus() {
+  statusLabel.text = "";
+}
+
+function addAxisToTransform(list : BABYLON.PositionGizmo[], scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer, transform : BABYLON.TransformNode | undefined) {
   if (transform) {
     let axis = new BABYLON.PositionGizmo(layer);
     axis.scaleRatio = 0.5
     axis.attachedNode = transform;
-    axisList.push(axis);
+    list.push(axis);
 
     let drag = () => {
       if (transform) {
-      statusLabel.text = transform.name + 
-      "\nX: " + transform.position.x.toFixed(5) + 
-      "\nY: " + transform.position.y.toFixed(5) + 
-      "\nZ: " + transform.position.z.toFixed(5);
-      statusLabel.linkOffsetY = -100;
+        statusLabel.text = transform.name + 
+        "\nX: " + transform.position.x.toFixed(6) + 
+        "\nY: " + transform.position.y.toFixed(6) + 
+        "\nZ: " + transform.position.z.toFixed(6);
+        statusLabel.linkOffsetY = -100;
       statusLabel.linkWithMesh(transform);
       }
     }
@@ -33,41 +58,59 @@ function addAxisToTransform(scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRe
   }
 }
 
-function toggleAxisOnRobot(scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer, robot : Robot) {
+function toggleAxisOnRobot(jointOrLink : Boolean, scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer, robot : Robot | undefined) {
+  let whichAxis = jointOrLink ? jointAxisList : linkAxisList;
 
-  if (axisList.length == 0) {
-    robot.joints.forEach((j) => {
-      addAxisToTransform(scene, layer, j.transform);
-    });
-    robot.links.forEach((l) => {
-      l.visuals.forEach((v) => {
-        addAxisToTransform(scene, layer, l.transform);
+  if (robot == undefined) {
+    return;
+  }
+
+  if (whichAxis.length == 0) {
+    if (jointOrLink) {
+      robot.joints.forEach((j: Joint) => {
+        addAxisToTransform(whichAxis, scene, layer, j.transform);
       });
-    });
+    } else {
+      robot.links.forEach((l) => {
+        l.visuals.forEach((v) => {
+          addAxisToTransform(whichAxis, scene, layer, v.transform);
+        });
+      });
+    }
   } else {
-    axisList.forEach((a) => {
-      a.dispose();
-    });
-    axisList = [];
+    clearAxisGizmos();
+    clearStatus();
   }
 }
 
-let rotationGizmos : BABYLON.RotationGizmo[] = [];
+let jointRotationGizmos : BABYLON.RotationGizmo[] = [];
+let linkRotationGizmos : BABYLON.RotationGizmo[] = [];
 
-function addRotationToTransform(scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer, transform : BABYLON.TransformNode | undefined) {
+function clearRotationGizmos() {
+  jointRotationGizmos.forEach((a) => {
+    a.dispose();
+  });
+  jointRotationGizmos = [];
+  linkRotationGizmos.forEach((a) => {
+    a.dispose();
+  });
+  linkRotationGizmos = [];
+}
+
+function addRotationToTransform(list : BABYLON.RotationGizmo[], scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer, transform : BABYLON.TransformNode | undefined) {
   if (transform) {
     let rotationGizmo = new BABYLON.RotationGizmo(layer);
     rotationGizmo.scaleRatio = 0.5
     rotationGizmo.attachedNode = transform;
-    rotationGizmos.push(rotationGizmo);
+    list.push(rotationGizmo);
 
     let drag = () => {
       if (transform) {
-      statusLabel.text = transform.name + 
-      "\nR:" + transform.rotation.x.toFixed(5) + 
-      "\nP:" + transform.rotation.y.toFixed(5) + 
-      "\nY:" + transform.rotation.z.toFixed(5);
-      statusLabel.linkOffsetY = -100;
+        statusLabel.text = transform.name + 
+        "\nR:" + transform.rotation.x.toFixed(6) + 
+        "\nP:" + transform.rotation.y.toFixed(6) + 
+        "\nY:" + transform.rotation.z.toFixed(6);
+        statusLabel.linkOffsetY = -100;
       statusLabel.linkWithMesh(transform);
       }
     }
@@ -79,22 +122,27 @@ function addRotationToTransform(scene : BABYLON.Scene, layer: BABYLON.UtilityLay
 
 }
 
-function toggleAxisRotationOnRobot(ui: GUI.AdvancedDynamicTexture, scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer, robot : Robot) {
-  if (rotationGizmos.length == 0) {
-    robot.joints.forEach((j) => {
-      addRotationToTransform(scene, layer, j.transform);
-    });
+function toggleAxisRotationOnRobot(jointOrLink : Boolean, ui: GUI.AdvancedDynamicTexture, scene : BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer, robot : Robot | undefined) {
+  if (robot == undefined) {
+    return;
+  }
 
-    robot.links.forEach((l) => {
-      l.visuals.forEach((v) => {
-        addRotationToTransform(scene, layer, v.transform);
+  let whichList = jointOrLink ? jointRotationGizmos : linkRotationGizmos;
+  if (whichList.length == 0) {
+    if (jointOrLink) {
+      robot.joints.forEach((j: Joint) => {
+        addRotationToTransform(whichList, scene, layer, j.transform);
       });
-    });
+    } else {
+      robot.links.forEach((l: Link) => {
+        l.visuals.forEach((v: Visual) => {
+          addRotationToTransform(whichList, scene, layer, v.transform);
+        });
+      });
+    }
   } else {
-    rotationGizmos.forEach((a) => {
-      a.dispose();
-    });
-    rotationGizmos = [];
+    clearRotationGizmos();
+    clearStatus();
   }
 }
 
@@ -105,13 +153,20 @@ var createScene = async function (engine : BABYLON.Engine, canvas : HTMLCanvasEl
     BABYLON.SceneLoader.RegisterPlugin(new ColladaFileLoader.DAEFileLoader());
   }
 
+  const environment = scene.createDefaultEnvironment({
+    createGround: true,
+    createSkybox: false,
+    enableGroundMirror: true,
+    groundMirrorSizeRatio: 0.15
+  });
+
   scene.useRightHandedSystem = true;
   scene.clearColor = new BABYLON.Color4(0.4, 0.4, 0.4, 1.0);// TODO (polyhobbyist) Make this configurable
 
   var radius = 10; // TODO (polyhobbyist): make this configurable
 
   // This creates and positions a free camera (non-mesh)
-  var camera = new BABYLON.ArcRotateCamera("camera1", - Math.PI / 3, 5 * Math.PI / 12, radius, new BABYLON.Vector3(0, 0, 0), scene);
+  camera = new BABYLON.ArcRotateCamera("camera1", - Math.PI / 3, 5 * Math.PI / 12, radius, new BABYLON.Vector3(0, 0, 0), scene);
   camera.wheelDeltaPercentage = 0.01;
   camera.minZ = 0.1;
 
@@ -121,12 +176,13 @@ var createScene = async function (engine : BABYLON.Engine, canvas : HTMLCanvasEl
   camera.attachControl(canvas, true);
 
   var groundMaterial = new Materials.GridMaterial("groundMaterial", scene);
-  groundMaterial.majorUnitFrequency = 1;
+  groundMaterial.majorUnitFrequency = 5;
   groundMaterial.minorUnitVisibility = 0.5;
   groundMaterial.gridRatio = 2;
   groundMaterial.opacity = 0.8;
   groundMaterial.useMaxLine = true;
-  groundMaterial.lineColor = BABYLON.Color3.Green();  // TODO (polyhobbyist) Make this configurable
+  groundMaterial.lineColor = BABYLON.Color3.Green();
+  groundMaterial.mainColor = BABYLON.Color3.Green();
 
   var ground = BABYLON.MeshBuilder.CreateGround("ground", {width: 50, height: 50}, scene);
   ground.material = groundMaterial;
@@ -136,13 +192,27 @@ var createScene = async function (engine : BABYLON.Engine, canvas : HTMLCanvasEl
   return scene;
 };
 
-async function applyURDF(scene : BABYLON.Scene, urdfText : string) : Promise<Robot | undefined>{
+async function applyURDF(scene : BABYLON.Scene, urdfUrl : string) : Promise<Robot | undefined>{
   if (scene == undefined) {
     return;
   }
   
   try {
-    let currentRobot = await urdf.deserializeUrdfToRobot(urdfText);
+    clearAxisGizmos();
+    clearRotationGizmos();
+    clearStatus();
+    resetCamera();
+
+    if (currentRobot) {
+      currentRobot.dispose();
+      currentRobot = undefined;
+    }
+
+    // fetch the URDF file from the URL
+    const response = await fetch(urdfUrl);
+    const urdfText = await response.text();
+
+    currentRobot = await urdf.deserializeUrdfToRobot(urdfText);
     currentRobot.create(scene);
 
     return currentRobot;
@@ -152,7 +222,27 @@ async function applyURDF(scene : BABYLON.Scene, urdfText : string) : Promise<Rob
   return undefined;
 }
 
-function createUI(scene : BABYLON.Scene, robot : Robot) {
+function resetCamera() {
+  if (camera != undefined) {
+    camera.alpha = - Math.PI / 3;
+    camera.beta = 5 * Math.PI / 12;
+    camera.target = new BABYLON.Vector3(0, 0, 0);
+  }
+}
+
+function createButton(toolbar: GUI.StackPanel, name : string, text : string, scene : BABYLON.Scene, onClick : () => void) {
+  var button = GUI.Button.CreateSimpleButton(name, text);
+  button.width = "100px"
+  button.height = "20px";
+  button.color = "white";
+  button.cornerRadius = 5;
+  button.background = "green";
+  button.onPointerUpObservable.add(onClick);
+  toolbar.addControl(button);
+  return button;
+}
+
+function createUI(scene : BABYLON.Scene) {
   var advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
   statusLabel.color = "white";
@@ -166,7 +256,7 @@ function createUI(scene : BABYLON.Scene, robot : Robot) {
   var toolbar = new GUI.StackPanel();
   toolbar.paddingTop = "10px";
   toolbar.paddingLeft = "10px";
-  toolbar.width = "300px";
+  toolbar.width = "500px";
   toolbar.height = "50px";
   toolbar.fontSize = "14px";
   toolbar.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
@@ -180,136 +270,62 @@ function createUI(scene : BABYLON.Scene, robot : Robot) {
   const gizmoManager = new BABYLON.GizmoManager(scene);
   gizmoManager.usePointerToAttachGizmos = false;
 
-  var button = GUI.Button.CreateSimpleButton("axisButton", "Axis");
-  button.width = 0.2;
-  button.height = "40px";
-  button.color = "white";
-  button.background = "green";
-  button.onPointerClickObservable.add(function() {
-
-    toggleAxisOnRobot(scene, utilLayer, robot);
+  createButton(toolbar, "jointAxisButton", "Joint Axis", scene, () => {
+    toggleAxisOnRobot(true, scene, utilLayer, currentRobot);
   });
-  toolbar.addControl(button);
 
-  var buttonRotate = GUI.Button.CreateSimpleButton("rotatioButton", "Rotation");
-  buttonRotate.width = 0.2;
-  buttonRotate.height = "40px";
-  buttonRotate.color = "white";
-  buttonRotate.background = "green";
-  buttonRotate.onPointerClickObservable.add(function() {
-    toggleAxisRotationOnRobot(advancedTexture, scene, utilLayer, robot);
-  });  
+  createButton(toolbar, "linkAxisButton", "Link Axis", scene, () => {
+    toggleAxisOnRobot(false, scene, utilLayer, currentRobot);
+  });
 
-  toolbar.addControl(buttonRotate);
+  createButton(toolbar, "jointRotationButton", "Joint Rotation", scene, () => {  
+    toggleAxisRotationOnRobot(true, advancedTexture, scene, utilLayer, currentRobot);
+  });
 
+  createButton(toolbar, "linkRotationButton", "Link Rotation", scene, () => {  
+    toggleAxisRotationOnRobot(false, advancedTexture, scene, utilLayer, currentRobot);
+  });
+
+  var testSelection = new GUI.SelectionPanel("tests");
+  testSelection.width = 0.25;
+  testSelection.height = 0.48;
+  testSelection.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+  testSelection.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+
+  advancedTexture.addControl(testSelection);
+
+  var transformGroup = new GUI.CheckboxGroup("Transformation");
+
+
+  var testList = [ 
+    {name: "Arti Robot", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/arti.urdf"},
+    {name: "Basic", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic.urdf"},
+    {name: "Basic Joint", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_joint.urdf"},
+    {name: "Basic Material", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_material.urdf"},
+    {name: "Basic Remote Mesh", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_remote_mesh.urdf"},
+    {name: "Basic with STL", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_stl_mesh.urdf"},
+    {name: "BB", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/bb.urdf"},
+    {name: "Motoman", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/motoman.urdf"},
+    {name: "Orientation", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/orientation.urdf"},
+  ];
+
+
+  testList.forEach((t) => {
+    transformGroup.addCheckbox(t.name, () => {
+      applyURDF(scene, t.url);
+    });
+  });
+
+  testSelection.addGroup(transformGroup);
 }
 // Main function that gets executed once the webview DOM loads
 export async function RenderMain() {
-
-  let u = /*xml*/ 
-  `<?xml version="1.0"?>
-  <robot name="bb_head">
-  
-    <material name="red">
-      <color rgba=".8 0 0 1"/>
-    </material>
-  
-    <link name="base_link">
-      <visual>
-        <geometry>
-          <mesh filename="https://raw.githubusercontent.com/polyhobbyist/bb_description/main/meshes/dome.stl" scale="0.001 0.001 0.001" />
-        </geometry>
-      </visual>
-    </link>
-  
-  
-    <link name="camera_link">
-      <visual>
-        <geometry>
-          <box size="0.01 0.01 0.001"/>
-        </geometry>
-      </visual>
-    </link>
-  
-    <joint name="dome_to_camera_joint" type="fixed">
-      <parent link="base_link"/>
-      <child link="camera_link"/>
-      <origin xyz="0 0.12 0.08" rpy="2.093 0 0"/>
-    </joint>
-  
-    <link name="front_depth_link">
-      <visual>
-        <geometry>
-          <box size="0.01 0.01 0.001"/>
-        </geometry>
-        <material name="red"/>
-      </visual>
-    </link>
-    
-    <joint name="dome_to_front_depth_joint" type="fixed">
-      <parent link="base_link"/>
-      <child link="front_depth_link"/>
-      <origin xyz="0 0.11 0.09" rpy="2.093 0 0"/>
-    </joint>
-  
-    <link name="left_depth_link">
-      <visual>
-        <geometry>
-          <box size="0.01 0.01 0.001"/>
-        </geometry>
-        <material name="red"/>
-      </visual>
-    </link>
-    
-    <joint name="dome_to_left_depth_joint" type="fixed">
-      <parent link="base_link"/>
-      <child link="left_depth_link"/>
-      <origin xyz="0.11693 -0.067 0.05" rpy="1.047198 0.959931 0.436332"/>
-    </joint>
-  
-    <link name="right_depth_link">
-      <visual>
-        <geometry>
-          <box size="0.01 0.01 0.001"/>
-        </geometry>
-        <material name="red"/>
-      </visual>
-    </link>
-    
-    <joint name="dome_to_right_depth_joint" type="fixed">
-      <parent link="base_link"/>
-      <child link="right_depth_link"/>
-      <origin xyz="-0.11693 -0.067 0.05" rpy="1.047198 -0.959931 -0.436332"/>
-    </joint>
-  
-  
-    <link name="depth_link">
-      <visual>
-        <geometry>
-          <sphere radius="0.001"/>
-        </geometry>
-      </visual>
-    </link>
-  
-    <joint name="dome_to_depth_joint" type="fixed">
-      <parent link="base_link"/>
-      <child link="depth_link"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-    </joint>
-  
-  </robot>
-    `;
-  
   const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement; // Get the canvas element
   const engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
   let scene = await createScene(engine, canvas);
   scene.debugLayer.show();
 
-  let robot = await applyURDF(scene, u);
-
-  if (robot != undefined) {
-    createUI(scene, robot);
-  }
+  createUI(scene);
 
   engine.runRenderLoop(function () {
     if (scene != undefined) {

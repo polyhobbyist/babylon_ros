@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<robot name="origins">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="https://raw.githubusercontent.com/IntelRealSense/realsense-ros/ros2-master/realsense2_description/meshes/l515.dae"/>
+      </geometry>
+    </visual>
+  </link>
+</robot>

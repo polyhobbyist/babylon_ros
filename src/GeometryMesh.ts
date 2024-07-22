@@ -35,6 +35,8 @@ export class Mesh implements IGeometry {
                 this.meshes.forEach(m => {
                     if (this.transform != undefined) {
                         m.addRotation(0, 0, Math.PI).addRotation(Math.PI/2, 0, 0);
+                        // Invert the left handed mesh to conform to the right handed coodinate system
+                        m.scaling = new BABYLON.Vector3(-1, 1, 1);
                         m.parent = this.transform;
                         
                         if (this.material != undefined && this.material.material != undefined) {

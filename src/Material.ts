@@ -18,13 +18,15 @@ export class Material {
             let c = new BABYLON.StandardMaterial(this.name, scene);
             c.diffuseTexture = new BABYLON.Texture(this.filename);
             c.diffuseTexture.hasAlpha = true;
-        } else if (this.color != undefined) {
+        } else {
             let m = new BABYLON.StandardMaterial(this.name, scene);
+
+            if (this.color == undefined) {
+                this.color = new BABYLON.Color4(1, 1, 1, 1);
+            }
             m.diffuseColor = new BABYLON.Color3(this.color.r, this.color.g, this.color.b);
             m.alpha = this.color.a;
             this.material = m;
-        } else {
-            this.material = new BABYLON.StandardMaterial(this.name, scene);
         }
         if (this.material) {
             this.material.backFaceCulling = false;
