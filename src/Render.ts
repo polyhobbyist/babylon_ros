@@ -12,6 +12,7 @@ import * as ColladaFileLoader from '@polyhobbyist/babylon-collada-loader';
 let ground : BABYLON.GroundMesh | undefined = undefined;
 let camera : BABYLON.ArcRotateCamera | undefined = undefined;
 let currentRobot : Robot | undefined = undefined;
+let worldAxis : BABYLON.TransformNode | undefined = undefined;
 
 var statusLabel = new GUI.TextBlock();
 let jointAxisList : BABYLON.PositionGizmo[] = [];
@@ -256,7 +257,7 @@ function createUI(scene : BABYLON.Scene) {
   var toolbar = new GUI.StackPanel();
   toolbar.paddingTop = "10px";
   toolbar.paddingLeft = "10px";
-  toolbar.width = "500px";
+  toolbar.width = "700px";
   toolbar.height = "50px";
   toolbar.fontSize = "14px";
   toolbar.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
@@ -286,6 +287,10 @@ function createUI(scene : BABYLON.Scene) {
     toggleAxisRotationOnRobot(false, advancedTexture, scene, utilLayer, currentRobot);
   });
 
+  createButton(toolbar, "worldAxis", "World Axis", scene, () => {  
+    toggleWorldAxis();
+  });
+
   var testSelection = new GUI.SelectionPanel("tests");
   testSelection.width = 0.25;
   testSelection.height = 0.48;
@@ -294,29 +299,100 @@ function createUI(scene : BABYLON.Scene) {
 
   advancedTexture.addControl(testSelection);
 
-  var transformGroup = new GUI.CheckboxGroup("Transformation");
+  var basicGroup = new GUI.RadioGroup("Basic Tests");
 
-
-  var testList = [ 
-    {name: "Arti Robot", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/arti.urdf"},
+  var basicTestList = [ 
     {name: "Basic", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic.urdf"},
     {name: "Basic Joint", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_joint.urdf"},
     {name: "Basic Material", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_material.urdf"},
     {name: "Basic Remote Mesh", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_remote_mesh.urdf"},
     {name: "Basic with STL", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_stl_mesh.urdf"},
-    {name: "BB", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/bb.urdf"},
-    {name: "Motoman", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/motoman.urdf"},
     {name: "Orientation", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/orientation.urdf"},
   ];
 
+  var robotTestList = [ 
+    {name: "leo", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/leo.urdf"},
+    {name: "BB", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/bb.urdf"},
+    {name: "Motoman", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/motoman.urdf"},
+    {name: "Arti Robot", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/arti.urdf"},
+  ];
 
-  testList.forEach((t) => {
-    transformGroup.addCheckbox(t.name, () => {
+  basicTestList.forEach((t) => {
+    basicGroup.addRadio(t.name, () => {
+      applyURDF(scene, t.url);
+    });
+  });
+  testSelection.addGroup(basicGroup);
+
+  var robotTestGroup = new GUI.RadioGroup("Robot Tests");
+  robotTestList.forEach((t) => {
+    robotTestGroup.addRadio(t.name, () => {
       applyURDF(scene, t.url);
     });
   });
 
-  testSelection.addGroup(transformGroup);
+  testSelection.addGroup(robotTestGroup);
+
+  let size = 8;
+
+  var makeTextPlane = function (text : string, color : string, size : number) {
+    var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", 50, scene, true);
+    dynamicTexture.hasAlpha = true;
+    dynamicTexture.drawText(text, 5, 40, "bold 36px Arial", color, "transparent", true);
+    var plane = BABYLON.MeshBuilder.CreatePlane("TextPlane", {size: size}, scene);
+    let material = new BABYLON.StandardMaterial("TextPlaneMaterial", scene);
+    material.backFaceCulling = false;
+    material.specularColor = new BABYLON.Color3(0, 0, 0);
+    material.diffuseTexture = dynamicTexture;
+
+    plane.material = material;
+    return plane;
+  };
+
+  worldAxis = new BABYLON.TransformNode("worldAxis", scene);
+
+  // Don't show it by default?
+  // Disabling since this is debug ui
+  // worldAxis.setEnabled(false);
+
+  // Babylon.JS coordinate system to ROS transform
+  worldAxis.rotation =  new BABYLON.Vector3(-Math.PI/2, 0, 0);
+
+  var axisX = BABYLON.MeshBuilder.CreateLines("axisX", {points: [
+      new BABYLON.Vector3(0, 0, 0), new BABYLON.Vector3(size, 0, 0), new BABYLON.Vector3(size * 0.95, 0.05 * size, 0),
+      new BABYLON.Vector3(size, 0, 0), new BABYLON.Vector3(size * 0.95, -0.05 * size, 0)
+  ]}, scene);
+  axisX.color = new BABYLON.Color3(1, 0, 0);
+  axisX.parent = worldAxis;
+
+  var xChar = makeTextPlane("X", "red", size / 10);
+  xChar.position = new BABYLON.Vector3(0.9 * size, -0.05 * size, 0);
+  xChar.parent = worldAxis; 
+
+  var axisY = BABYLON.MeshBuilder.CreateLines("axisY", {points: [
+      new BABYLON.Vector3(0, 0, 0), new BABYLON.Vector3(0, size, 0), new BABYLON.Vector3(-0.05 * size, size * 0.95, 0),
+      new BABYLON.Vector3(0, size, 0), new BABYLON.Vector3(0.05 * size, size * 0.95, 0)
+  ]}, scene);
+  axisY.color = new BABYLON.Color3(0, 1, 0);
+  axisY.parent = worldAxis;
+
+  var yChar = makeTextPlane("Y", "green", size / 10);
+  yChar.position = new BABYLON.Vector3(-0.05 * size, 0.9 * size, 0);
+  yChar.parent = worldAxis;
+
+  var axisZ = BABYLON.MeshBuilder.CreateLines("axisZ", { points: [
+      new BABYLON.Vector3(0, 0, 0), new BABYLON.Vector3(0, 0, size), new BABYLON.Vector3(0, -0.05 * size, size * 0.95),
+      new BABYLON.Vector3(0, 0, size), new BABYLON.Vector3(0, 0.05 * size, size * 0.95)
+  ]}, scene);
+  axisZ.color = new BABYLON.Color3(0, 0, 1);
+  axisZ.parent = worldAxis;
+
+  var zChar = makeTextPlane("Z", "blue", size / 10);
+  zChar.position = new BABYLON.Vector3(0, 0.05 * size, 0.9 * size);
+  zChar.rotation =  new BABYLON.Vector3(-Math.PI/2, 0, 0);
+  zChar.parent = worldAxis;
+
+  worldAxis.position = new BABYLON.Vector3(0, 0, 0);
 }
 // Main function that gets executed once the webview DOM loads
 export async function RenderMain() {
@@ -341,3 +417,13 @@ export async function RenderMain() {
   
   
 }
+function toggleWorldAxis() {
+  if (worldAxis != undefined) {
+    if (worldAxis.isEnabled()) {
+      worldAxis.setEnabled(false);
+    } else {
+      worldAxis.setEnabled(true);
+    }
+  }
+}
+
