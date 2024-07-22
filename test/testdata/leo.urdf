@@ -266,4 +266,4 @@
     <parent link="base_link"/>
     <child link="imu_frame"/>
   </joint>
-<
+</robot>
