@@ -1,6 +1,6 @@
 import * as BABYLON from 'babylonjs';
 import * as Materials from 'babylonjs-materials';
-import {parseString} from 'xml2js';
+import {parseStringPromise} from 'xml2js';
 import { Robot } from './Robot';
 import { Link } from './Link';
 import { Joint, JointType } from './Joint';
@@ -13,12 +13,7 @@ import { Mesh } from './GeometryMesh';
 import {parseVector, parseRPY, parseColor } from './util';
 
 export async function parseUrdf(urdf: string) : Promise<any> {
-    return await new Promise((resolve, reject) => parseString(urdf, (err, jsonData) => {
-        if (err) {
-        reject(err);
-        }
-        resolve(jsonData);
-    }));
+    return parseStringPromise(urdf);
 }
 
 export function deserializeMaterial(materialNode: any) : Material {
@@ -159,52 +154,71 @@ export async function deserializeJoint(jointObject: any) : Promise<Joint> {
 }
 
 export async function deserializeUrdfToRobot(urdfString: string) : Promise<Robot> {
-    let urdf = await parseUrdf(urdfString);
+  let urdf : any;
 
-    let robot = new Robot();
+  try
+  {
+    urdf = await parseUrdf(urdfString);
+  }
+  catch (e: any)
+  {
+    console.error(`*** Failed to parse URDF: ${e.message}`);
+    throw new Error(`Failed to parse URDF: ${e.message}`);
+  }
 
-    robot.name = urdf.robot.$?.name;
+  // If urdf is a parse error then throw an error
+  if (urdf.parsererror !== undefined) {
+    throw new Error(`Failed to parse URDF: ${urdf.parsererror._}`);
+  }
 
-    if (urdf.robot.material instanceof Array) {
-      for (let material of urdf.robot.material) {
-        let m = await deserializeMaterial(material);
-        robot.materials.set(m.name, m);
+  if (urdf.robot == undefined) {
+    throw new Error("URDF does not contain a robot element.");
+  }
+  
+  let robot = new Robot();
+
+  robot.name = urdf.robot.$?.name;
+
+  if (urdf.robot.material instanceof Array) {
+    for (let material of urdf.robot.material) {
+      let m = await deserializeMaterial(material);
+      robot.materials.set(m.name, m);
+    }
+  }
+
+  if (urdf.robot.link instanceof Array) {
+    for (let link of urdf.robot.link) {
+      let l = await deserializeLink(link);
+      if (robot.links.has(l.name)) {
+        throw new Error(`Robot already has ${l.name} please use another name for the second link.`);
+      } else {
+        robot.links.set(l.name, l);
       }
     }
+  }
 
-    if (urdf.robot.link instanceof Array) {
-      for (let link of urdf.robot.link) {
-        let l = await deserializeLink(link);
-        if (robot.links.has(l.name)) {
-          throw new Error(`Robot already has ${l.name} please use another name for the second link.`);
-        } else {
-          robot.links.set(l.name, l);
-        }
+  if (urdf.robot.joint instanceof Array) {
+    for (let joint of urdf.robot.joint) {
+      let j = await deserializeJoint(joint);
+      robot.joints.set(j.name, j);
+
+      let p = robot.links.get(j.parentName);
+      if (p) {
+        j.parent = p;
+      } else {
+        throw new Error(`Joint ${j.name} has refered to a link ${j.parentName} which could not be found.`);
+      }
+
+      let c = robot.links.get(j.childName);
+      if (c) {
+        j.child = c;
+      } else {
+        throw new Error(`Joint ${j.name} has refered to a link ${j.childName} which could not be found.`);
       }
     }
+  }
 
-    if (urdf.robot.joint instanceof Array) {
-      for (let joint of urdf.robot.joint) {
-        let j = await deserializeJoint(joint);
-        robot.joints.set(j.name, j);
-
-        let p = robot.links.get(j.parentName);
-        if (p) {
-          j.parent = p;
-        } else {
-          throw new Error(`Joint ${j.name} has refered to a link ${j.parentName} which could not be found.`);
-        }
-
-        let c = robot.links.get(j.childName);
-        if (c) {
-          j.child = c;
-        } else {
-          throw new Error(`Joint ${j.name} has refered to a link ${j.childName} which could not be found.`);
-        }
-      }
-    }
-
-    return robot;
+  return robot;
 }
 
 

@@ -42,7 +42,7 @@ export class Visual {
         this.geometry?.dispose();
 
         // References will be disposed by the robot
-        if (this.material?.isReference()) {
+        if (this.material?.isReference() == false) {
             this.material?.dispose();
         }
 

@@ -12,6 +12,7 @@ export class Mesh implements IGeometry {
     public meshes: BABYLON.AbstractMesh[] | undefined = undefined;
     public transform : BABYLON.TransformNode | undefined = undefined;
     public material : Material | undefined = undefined;
+    public skeletons : BABYLON.Skeleton[] | undefined = undefined;
 
     constructor(uri: string, scale: BABYLON.Vector3) {
         this.uri = uri;
@@ -26,6 +27,8 @@ export class Mesh implements IGeometry {
 
             // find the top level bone in skeletons
             if (skeletons != undefined && skeletons.length > 0) {
+                this.skeletons = skeletons;
+
                 let rootBone = skeletons[0].bones.find(b => b.getParent() == undefined);
                 if (rootBone != undefined) {
                     rootBone.returnToRest();
@@ -77,6 +80,18 @@ export class Mesh implements IGeometry {
     }
 
     public dispose(): void {
+        if (this.skeletons != undefined) {
+            this.skeletons.forEach(s => {
+                s.bones.forEach(b => {
+                    b.getChildMeshes().forEach(m => {
+                        m.dispose();
+                    });
+                });
+                
+                s.dispose();
+            });
+        }
+
         if (this.meshes != undefined) {
             this.meshes.forEach(m => {
                 m.dispose();

@@ -217,7 +217,8 @@ async function applyURDF(scene : BABYLON.Scene, urdfUrl : string) : Promise<Robo
     currentRobot.create(scene);
 
     return currentRobot;
-    } catch (err) {
+    } catch (err: any) {
+      console.error(err.message);
   }
 
   return undefined;
@@ -308,6 +309,7 @@ function createUI(scene : BABYLON.Scene) {
     {name: "Basic Remote Mesh", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_remote_mesh.urdf"},
     {name: "Basic with STL", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_stl_mesh.urdf"},
     {name: "Orientation", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/orientation.urdf"},
+    {name: "Bad", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/bad.urdf"},
   ];
 
   var robotTestList = [ 
