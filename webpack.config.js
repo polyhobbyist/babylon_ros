@@ -56,6 +56,7 @@ const appConfig = {
             amd: 'babylonjs',
             root: '_'
         },
-    }} 
+    }
+}
 
 module.exports = [webConfig, appConfig]

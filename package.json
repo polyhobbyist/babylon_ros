@@ -45,6 +45,7 @@
   "author": "lou@polyhobbyist.com",
   "license": "MIT",
   "dependencies": {
+    "@polyhobbyist/babylon-collada-loader": "^0.0.4",
     "@types/xml2js": "^0.4.14",
     "babylonjs": "^7.16.0",
     "babylonjs-gui": "^7.16.0",

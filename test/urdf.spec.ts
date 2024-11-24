@@ -7,7 +7,7 @@ import { Cylinder } from '../src/GeometryCylinder';
 import { Robot } from '../src/Robot';
 import {loadRobot} from './testutil';
 
-let engine = undefined;
+let engine : any = undefined;
 let scene : BABYLON.Scene | undefined = undefined;
 
 beforeAll(() => {
@@ -155,4 +155,14 @@ describe("Testing URDF Loading", () => {
             var r = await deserializeUrdfToRobot(urdf);
         }).rejects.toThrow("Link fixed must have a type.");
     });
+
+    test('Test revolute joint with effort', async () => {
+        var robot = await loadRobot('/testdata/basic_with_joint_with_effort.urdf');
+
+        let j = robot.joints.get("base_to_right_leg");
+        expect(j).toBeDefined();
+        expect(j?.lowerLimit).toBe(0);
+        expect(j?.upperLimit).toBe(10);
+    });
+
 });
