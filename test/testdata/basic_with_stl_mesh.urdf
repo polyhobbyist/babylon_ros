@@ -3,7 +3,7 @@
   <link name="base_link">
     <visual>
       <geometry>
-        <mesh filename="https://github.com/polyhobbyist/babylon_ros/blob/5d3fad9df86af98530aaad96ee74b44a1175bbe1/test/testdata/xyz_cube.stl" />
+        <mesh filename="https://github.com/polyhobbyist/babylon_ros/raw/5d3fad9df86af98530aaad96ee74b44a1175bbe1/test/testdata/xyz_cube.stl" />
       </geometry>
     </visual>
   </link>
