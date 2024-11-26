@@ -18,6 +18,7 @@ function addTestToRobotScene(robotScene : RobotScene) {
   }
 
   var testSelection = new GUI.SelectionPanel("tests");
+  testSelection.color = "white";
   testSelection.width = 0.25;
   testSelection.height = 0.48;
   testSelection.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
@@ -26,6 +27,9 @@ function addTestToRobotScene(robotScene : RobotScene) {
   robotScene.UILayer.addControl(testSelection);
 
   var basicGroup = new GUI.RadioGroup("Basic Tests");
+  testSelection.addGroup(basicGroup);
+
+  basicGroup.groupPanel.color = "white";
 
   var basicTestList = [ 
     {name: "Basic", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic.urdf"},
@@ -45,24 +49,43 @@ function addTestToRobotScene(robotScene : RobotScene) {
   ];
 
   basicTestList.forEach((t) => {
-    basicGroup.addRadio(t.name, () => {
-      robotScene.applyURDF(t.url);
+    basicGroup.addRadio(t.name, async () => {
+      const response = await fetch(t.url);
+      const urdfText = await response.text();
+      
+      robotScene.applyURDF(urdfText);
     });
   });
-  testSelection.addGroup(basicGroup);
-
+  
   var robotTestGroup = new GUI.RadioGroup("Robot Tests");
+  testSelection.addGroup(robotTestGroup);
+
+  robotTestGroup.groupPanel.color = "white";
+
   robotTestList.forEach((t) => {
-    robotTestGroup.addRadio(t.name, () => {
-      robotScene.applyURDF(t.url);
+    robotTestGroup.addRadio(t.name, async () => {
+      const response = await fetch(t.url);
+      const urdfText = await response.text();
+      
+      robotScene.applyURDF(urdfText);
     });
   });
 
-  testSelection.addGroup(robotTestGroup);
+  // Recursively set the color to white
+  function setControlColor(control : GUI.Control) {
+    control.color = "white";
+    if (control instanceof GUI.Container) {
+      control.children.forEach((c) => {
+        setControlColor(c);
+      });
+    }
+  }
+
+  setControlColor(testSelection);
 }
 
 // Main function that gets executed once the webview DOM loads
-export async function RenderMain() {
+export async function RenderTestMain() {
   const canvas = document.getElementById("renderCanvas");
   const canvasElement = canvas as unknown as HTMLCanvasElement;
 
@@ -75,7 +98,7 @@ export async function RenderMain() {
   currentRobotScene.scene.debugLayer.show();
   currentRobotScene.createUI();
   addTestToRobotScene(currentRobotScene);
-  
+
   currentRobotScene.engine.runRenderLoop(function () {
     if (currentRobotScene !== undefined && currentRobotScene.scene !== undefined) {
       currentRobotScene.scene.render();
@@ -90,5 +113,3 @@ export async function RenderMain() {
     }
   });  
 }
-
-window.addEventListener("load", RenderMain);

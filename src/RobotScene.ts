@@ -274,7 +274,7 @@ export class RobotScene {
     }
     
     this.UILayer = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", false, this.scene);
-  
+    
     this.statusLabel.color = "white";
     this.statusLabel.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
     this.statusLabel.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
@@ -286,7 +286,7 @@ export class RobotScene {
     var toolbar = new GUI.StackPanel();
     toolbar.paddingTop = "10px";
     toolbar.paddingLeft = "10px";
-    toolbar.width = "500px";
+    toolbar.width = "700px";
     toolbar.height = "50px";
     toolbar.fontSize = "14px";
     toolbar.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
@@ -346,7 +346,9 @@ export class RobotScene {
       }
     } catch (err: any) {
 
-      if (vscode !== undefined) {
+      if (vscode === undefined) {
+        console.error(`Error loading urdf: ${err.message}`);
+      } else {
           vscode.postMessage({
           command: "error",
           text: err.message,
