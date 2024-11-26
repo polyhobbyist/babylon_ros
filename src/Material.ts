@@ -38,7 +38,7 @@ export class Material {
         this.material?.dispose();
     }
 }
-/*
+
 export class CollisionMaterial extends Material {
     constructor() {
         super();
@@ -46,7 +46,8 @@ export class CollisionMaterial extends Material {
     }
     public create(scene: BABYLON.Scene) : void {
         let m = new BABYLON.StandardMaterial('collision_material', scene);
-        //m.diffuseColor = BABYLON.Color3.Green(); // TODO: Customizable
+        m.diffuseColor = BABYLON.Color3.Green(); // TODO: Customizable
+        m.alpha = 0.5;
         //var fireTexture = new FireProceduralTexture("fire", 256, scene);
         //m.emissiveTexture = fireTexture;
         //m.opacityTexture = fireTexture;
@@ -55,4 +56,3 @@ export class CollisionMaterial extends Material {
     }
     
 }
-*/

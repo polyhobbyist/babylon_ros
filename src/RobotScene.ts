@@ -163,8 +163,8 @@ export class RobotScene {
   
   toggleCollision() {
     if (this.currentRobot) {
-      this.currentRobot.links.forEach((l: any) => {
-        l.collision.forEach((c: any) => {
+      this.currentRobot.links.forEach((link: Link, name: string) => {
+        link.collisions.forEach((c: Visual) => {
             c.setEnabled(!c.isEnabled());
         });
       });
@@ -173,8 +173,8 @@ export class RobotScene {
 
   toggleVisuals() {
     if (this.currentRobot) {
-      this.currentRobot.links.forEach((l: any) => {
-        l.visuals.forEach((v: any) => {
+      this.currentRobot.links.forEach((link: Link, name: string) => {
+        link.visuals.forEach((v: Visual) => {
             v.setEnabled(!v.isEnabled());
         });
       });
@@ -306,7 +306,7 @@ export class RobotScene {
     var toolbar = new GUI.StackPanel();
     toolbar.paddingTop = "10px";
     toolbar.paddingLeft = "10px";
-    toolbar.width = "700px";
+    toolbar.width = "100%";
     toolbar.height = "50px";
     toolbar.fontSize = "14px";
     toolbar.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
