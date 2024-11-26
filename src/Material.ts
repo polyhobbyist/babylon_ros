@@ -1,4 +1,5 @@
 import * as BABYLON from 'babylonjs';
+//import {FireProceduralTexture} from 'babylonjs-procedural-textures';
 
 export class Material {
     public name : string = "default";
@@ -37,3 +38,21 @@ export class Material {
         this.material?.dispose();
     }
 }
+/*
+export class CollisionMaterial extends Material {
+    constructor() {
+        super();
+        this.name = "collision";
+    }
+    public create(scene: BABYLON.Scene) : void {
+        let m = new BABYLON.StandardMaterial('collision_material', scene);
+        //m.diffuseColor = BABYLON.Color3.Green(); // TODO: Customizable
+        //var fireTexture = new FireProceduralTexture("fire", 256, scene);
+        //m.emissiveTexture = fireTexture;
+        //m.opacityTexture = fireTexture;
+
+        this.material = m;
+    }
+    
+}
+*/

@@ -14,7 +14,8 @@ export class Robot {
     public materials : Map<string, Material> = new Map<string, Material>();
 
     constructor() {
-        this.materials.set("default", new Material());
+      this.materials.set("default", new Material());
+      //this.materials.set("collision", new CollisionMaterial());
     }
     
     create(scene: BABYLON.Scene) {
