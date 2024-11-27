@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<!-- From https://github.com/LeoRover/leo_common-ros2 - here due to preprocessing for testing -->
+<robot name="leo">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="https://raw.githubusercontent.com/LeoRover/leo_common-ros2/humble/leo_description/models/Chassis.dae"/>
+      </geometry>
+    </visual>
+  </link>
+</robot>
