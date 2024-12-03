@@ -56,7 +56,7 @@ export class Mesh implements IGeometry {
         this.transform = new BABYLON.TransformNode("mesh_mesh", scene);
         this.transform.scaling = this.scale;
 
-        this.material = mat;
+        this.material = mat ?? this.material;
 
         if (this.uri.startsWith("file://"))
         {
