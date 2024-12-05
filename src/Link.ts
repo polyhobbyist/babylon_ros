@@ -28,7 +28,7 @@ export class Link {
 
         if (this.collisions.length > 0) {
             for (let collision of this.collisions) {
-                //collision.material = materialMap.get("collision");
+                collision.material = materialMap.get("collision");
                 collision.create(scene, materialMap);
                 collision.setEnabled(false);
                 if (collision.transform) {

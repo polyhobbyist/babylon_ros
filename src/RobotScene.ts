@@ -18,7 +18,7 @@ export class RobotScene {
   public UILayer : GUI.AdvancedDynamicTexture | undefined = undefined;
   
   public ground : BABYLON.GroundMesh | undefined = undefined;
-  private camera : BABYLON.ArcRotateCamera | undefined = undefined;
+  public camera : BABYLON.ArcRotateCamera | undefined = undefined;
   private statusLabel = new GUI.TextBlock();
   public readyToRender : Boolean = false;
 
@@ -344,9 +344,12 @@ export class RobotScene {
     this.createButton(toolbar, "collision", "Collision", this.scene, () => {  
       this.toggleCollision();
     });
+
+    /*
     this.createButton(toolbar, "visuls", "Visuals", this.scene, () => {  
       this.toggleVisuals();
     });
+    */
   }
   
   public async applyURDF(urdfText: string, vscode: any | undefined = undefined) {
@@ -356,8 +359,9 @@ export class RobotScene {
     this.resetCamera();
 
     if (this.currentRobot) {
-      this.currentRobot.dispose();
+      var tempR = this.currentRobot;
       this.currentRobot = undefined;
+      tempR.dispose();
     }
 
     if (vscode !== undefined) {
@@ -424,6 +428,8 @@ export class RobotScene {
     this.camera.minZ = 0.1;
 
     const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), this.scene);
+    const light2 = new BABYLON.HemisphericLight("light2", new BABYLON.Vector3(1, 0, 0), this.scene);
+    const light3 = new BABYLON.HemisphericLight("light3", new BABYLON.Vector3(0, 0, 1), this.scene);
 
     // This attaches the camera to the canvas
     this.camera.attachControl(canvas, true);
