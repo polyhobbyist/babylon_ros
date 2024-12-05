@@ -159,7 +159,27 @@ export class RobotScene {
       this.clearRotationGizmos();
       this.clearStatus();
     }
-  }  
+  }
+  
+  toggleCollision() {
+    if (this.currentRobot) {
+      this.currentRobot.links.forEach((link: Link, name: string) => {
+        link.collisions.forEach((c: Visual) => {
+            c.setEnabled(!c.isEnabled());
+        });
+      });
+    }
+  }
+
+  toggleVisuals() {
+    if (this.currentRobot) {
+      this.currentRobot.links.forEach((link: Link, name: string) => {
+        link.visuals.forEach((v: Visual) => {
+            v.setEnabled(!v.isEnabled());
+        });
+      });
+    }
+  }
 
   public resetCamera() {
     if (this.camera) {
@@ -286,7 +306,7 @@ export class RobotScene {
     var toolbar = new GUI.StackPanel();
     toolbar.paddingTop = "10px";
     toolbar.paddingLeft = "10px";
-    toolbar.width = "700px";
+    toolbar.width = "100%";
     toolbar.height = "50px";
     toolbar.fontSize = "14px";
     toolbar.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
@@ -298,6 +318,8 @@ export class RobotScene {
   
     const gizmoManager = new BABYLON.GizmoManager(this.scene);
     gizmoManager.usePointerToAttachGizmos = false;
+
+    this.createWorldAxis();
   
     this.createButton(toolbar, "jointAxisButton", "Joint Axis", this.scene, () => {
       this.toggleAxisOnRobot(true, this.scene, utilLayer);
@@ -317,6 +339,13 @@ export class RobotScene {
 
     this.createButton(toolbar, "worldAxis", "World Axis", this.scene, () => {  
       this.toggleWorldAxis();
+    });
+
+    this.createButton(toolbar, "collision", "Collision", this.scene, () => {  
+      this.toggleCollision();
+    });
+    this.createButton(toolbar, "visuls", "Visuals", this.scene, () => {  
+      this.toggleVisuals();
     });
   }
   

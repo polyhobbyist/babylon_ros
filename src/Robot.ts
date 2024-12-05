@@ -1,5 +1,5 @@
 import * as BABYLON from 'babylonjs';
-import { Material } from './Material';
+import { Material, CollisionMaterial } from './Material';
 
 import {Link} from './Link';
 import {Joint} from './Joint';
@@ -14,10 +14,11 @@ export class Robot {
     public materials : Map<string, Material> = new Map<string, Material>();
 
     constructor() {
-        let mat = new Material();
-        mat.name = "default";
-        mat.color = new BABYLON.Color4(0.5, 0.5, 0.5, 1);
-        this.materials.set("default", mat);
+      let mat = new Material();
+      mat.name = "default";
+      mat.color = new BABYLON.Color4(0.5, 0.5, 0.5, 1);
+      this.materials.set("default", mat);
+      this.materials.set("collision", new CollisionMaterial());
     }
     
     create(scene: BABYLON.Scene) {

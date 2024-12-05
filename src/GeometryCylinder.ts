@@ -29,7 +29,7 @@ export class Cylinder implements IGeometry {
         if (mat != undefined && mat.material != undefined) {
             this.meshes[0].material = mat.material;
         }
-     }
+    }
     public dispose() : void {
         if (this.meshes != undefined) {
             this.meshes.forEach(m => {

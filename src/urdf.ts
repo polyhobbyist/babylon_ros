@@ -91,6 +91,14 @@ export async function deserializeLink(linkObject: any) : Promise<Link> {
         link.visuals.push(v);
       }
     }
+
+    if (linkObject.collision?.length > 0) {
+      for (let collision of linkObject.collision) {
+        let c = await deserializeVisual(collision);
+        c.name = link.name;
+        link.collisions.push(c);
+      }
+    }
     return link;
 }
 

@@ -38,6 +38,19 @@ export class Visual {
         }
     }
 
+    public setEnabled(enabled: boolean) : void {
+        if (this.transform != undefined) {
+            this.transform.setEnabled(enabled);
+        }
+    }
+
+    public isEnabled() : boolean {
+        if (this.transform != undefined) {
+            return this.transform.isEnabled();
+        }
+        return false;
+    }
+
     public dispose() : void {
         this.geometry?.dispose();
 
