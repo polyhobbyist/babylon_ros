@@ -28,6 +28,7 @@ export class RobotScene {
   private linkRotationGizmos : BABYLON.RotationGizmo[] = [];
   private worldAxis : BABYLON.TransformNode | undefined = undefined;
   private worldAxisSize = 8.0;
+  private selectedVisual : Visual | undefined = undefined;
       
 
   clearStatus() {
@@ -181,6 +182,18 @@ export class RobotScene {
     }
   }
 
+  toggleBoundingBoxes() {
+    if (this.currentRobot) {
+      this.currentRobot.links.forEach((link: Link, name: string) => {
+        link.visuals.forEach((v: Visual) => {
+            v.geometry?.meshes?.forEach((m: BABYLON.AbstractMesh) => {
+              m.showBoundingBox = !m.showBoundingBox;
+            });
+        });
+      });
+    }
+  }
+
   public resetCamera() {
     if (this.camera) {
       this.camera.alpha = - Math.PI / 3;
@@ -293,7 +306,7 @@ export class RobotScene {
       return;
     }
     
-    this.UILayer = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", false, this.scene);
+    this.UILayer = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, this.scene);
     
     this.statusLabel.color = "white";
     this.statusLabel.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
@@ -345,11 +358,55 @@ export class RobotScene {
       this.toggleCollision();
     });
 
+
     /*
+    // Currently disabled because meshes don't share a common root, so doesn't work on all types yet.
     this.createButton(toolbar, "visuls", "Visuals", this.scene, () => {  
       this.toggleVisuals();
     });
     */
+
+    let that = this;
+    this.scene.onPointerDown = function castRay() {
+      if (that.scene && that.camera) {
+        if (that.selectedVisual) {
+          that.selectedVisual.geometry?.meshes?.forEach((m: BABYLON.AbstractMesh) => {
+            m.showBoundingBox = false;
+          });
+          that.selectedVisual = undefined;
+        }
+
+        that.clearStatus();
+
+        var ray = that.scene.createPickingRay(that.scene.pointerX, that.scene.pointerY, BABYLON.Matrix.Identity(), that.camera, false);	
+
+        var hit = that.scene.pickWithRay(ray);
+        if (hit?.pickedMesh) {
+          // find the visual that has this mesh
+          let found = false;
+          that.currentRobot?.links.forEach((link: Link, name: string) => {
+            link.visuals.forEach((v: Visual) => {
+              v.geometry?.meshes?.forEach((m: BABYLON.AbstractMesh) => {
+                if (hit?.pickedMesh && m === hit.pickedMesh) {
+                  that.selectedVisual = v;
+                  that.selectedVisual.geometry?.meshes?.forEach((m: BABYLON.AbstractMesh) => {
+                    m.showBoundingBox = true;
+                  });
+                          let bound : BABYLON.BoundingBox = hit.pickedMesh.getBoundingInfo().boundingBox;
+                  if (that.selectedVisual?.transform) {
+                    that.statusLabel.text = v.name + "\n" + 
+                      "(" + bound.maximum.x.toFixed(6) + ", " + bound.maximum.y.toFixed(6) + ", " + bound.maximum.z.toFixed(6) + ")\n" + 
+                      "(" + bound.minimum.x.toFixed(6) + ", " + bound.minimum.y.toFixed(6) + ", " + bound.minimum.z.toFixed(6) + ")";
+                    that.statusLabel.linkWithMesh(m);
+                  }
+                }
+              });
+            });
+          });
+          
+        }
+      }
+    }
   }
   
   public async applyURDF(urdfText: string, vscode: any | undefined = undefined) {
