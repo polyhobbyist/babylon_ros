@@ -23,7 +23,6 @@ export class Mesh implements IGeometry {
         // Get a pointer to the mesh
         if (meshes.length > 0 && this.transform != undefined) {
             this.meshes = meshes;
-            this.meshes[0].parent = this.transform;
 
             // find the top level bone in skeletons
             if (skeletons != undefined && skeletons.length > 0) {
@@ -33,6 +32,9 @@ export class Mesh implements IGeometry {
                 if (rootBone != undefined) {
                     rootBone.returnToRest();
                 }
+
+                
+
             } else {
 
                 this.meshes.forEach(m => {
@@ -45,9 +47,18 @@ export class Mesh implements IGeometry {
                         if (this.material != undefined && this.material.material != undefined) {
                             m.material = this.material.material;
                         }
+
                     }
                 });
             }
+
+            //this.meshes[0].parent = this.transform;
+
+            this.meshes.forEach(m => {
+                if (m.skeleton != undefined) {
+                    m.setEnabled(true);
+                }
+            });
         }
     }
 

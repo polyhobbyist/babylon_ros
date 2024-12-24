@@ -43,6 +43,7 @@ function addTestToRobotScene(robotScene : RobotScene) {
 
   var robotTestList = [ 
     {name: "leo", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/leo.urdf"},
+    {name: "leoChassis", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/leo_chassis.urdf"},
     {name: "BB", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/bb.urdf"},
     {name: "Motoman", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/motoman.urdf"},
     {name: "Arti Robot", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/arti.urdf"},
@@ -100,10 +101,12 @@ export async function RenderTestMain() {
   addTestToRobotScene(currentRobotScene);
 
   currentRobotScene.engine.runRenderLoop(function () {
-    if (currentRobotScene !== undefined && currentRobotScene.scene !== undefined) {
+    if (currentRobotScene !== undefined && currentRobotScene.scene !== undefined && currentRobotScene.readyToRender === true) { 
       currentRobotScene.scene.render();
     }
   });
+
+  currentRobotScene.readyToRender = true;
   
   currentRobotScene.engine.resize();
   

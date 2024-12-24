@@ -3,6 +3,7 @@ import * as BABYLON from 'babylonjs';
 import { IGeometry } from "./IGeometry";
 import { Material } from './Material';
 import { Visual } from "./Visual";
+import { Inertial } from './Inertial';
 
 export class Link {
     public name : string = "";
@@ -13,6 +14,8 @@ export class Link {
     public visuals : Array<Visual> = new Array<Visual>();
 
     public collisions : Array<Visual> = new Array<Visual>();
+
+    public inertial : Inertial | undefined = undefined;
 
     public create(scene: BABYLON.Scene, materialMap : Map<string, Material>) {
         this.transform = new BABYLON.TransformNode(this.name, scene);

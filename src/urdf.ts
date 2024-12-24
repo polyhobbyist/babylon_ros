@@ -10,6 +10,7 @@ import { Cylinder } from './GeometryCylinder';
 import { Sphere } from './GeometrySphere';
 import { Box } from './GeometryBox';
 import { Mesh } from './GeometryMesh';
+import { Inertial } from './Inertial';
 import {parseVector, parseRPY, parseColor } from './util';
 
 export async function parseUrdf(urdf: string) : Promise<any> {
@@ -99,6 +100,32 @@ export async function deserializeLink(linkObject: any) : Promise<Link> {
         link.collisions.push(c);
       }
     }
+
+    if (linkObject.inertial?.length == 1) {
+      link.inertial = new Inertial();
+      link.inertial.name = link.name;
+      
+      if (linkObject.inertial[0].origin && linkObject.inertial[0].origin.length == 1) {
+        if (linkObject.inertial[0].origin[0].$.xyz) {
+          link.inertial.origin = parseVector(linkObject.inertial[0].origin[0].$.xyz);
+        }
+      }
+
+      if (linkObject.inertial[0].mass && linkObject.inertial[0].mass.length == 1) {
+        link.inertial.mass = parseFloat(linkObject.inertial[0].mass[0].$.value);
+      }
+
+      if (linkObject.inertial[0].inertia && linkObject.inertial[0].inertia.length == 1) {
+        let i = linkObject.inertial[0].inertia[0];
+        link.inertial.ixx = parseFloat(i.$.ixx);
+        link.inertial.ixy = parseFloat(i.$.ixy);
+        link.inertial.ixz = parseFloat(i.$.ixz);
+        link.inertial.iyy = parseFloat(i.$.iyy);
+        link.inertial.iyz = parseFloat(i.$.iyz);
+        link.inertial.izz = parseFloat(i.$.izz);
+      }
+    }
+
     return link;
 }
 

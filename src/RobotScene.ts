@@ -410,6 +410,9 @@ export class RobotScene {
   }
   
   public async applyURDF(urdfText: string, vscode: any | undefined = undefined) {
+
+    this.readyToRender = false;
+
     this.clearAxisGizmos();
     this.clearRotationGizmos();
     this.clearStatus();
@@ -433,6 +436,7 @@ export class RobotScene {
       if (this.scene) {
         this.currentRobot = await urdf.deserializeUrdfToRobot(urdfText);
         this.currentRobot.create(this.scene);
+        this.readyToRender = true;
       }
     } catch (err: any) {
 
