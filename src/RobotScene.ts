@@ -2,7 +2,7 @@ import * as BABYLON from 'babylonjs';
 import * as Materials from 'babylonjs-materials';
 import * as urdf from './urdf';
 import {Robot} from './Robot';
-import {Joint} from './Joint';
+import {Joint, JointType} from './Joint';
 import {Link} from './Link';
 import {Visual} from './Visual';
 
@@ -26,9 +26,12 @@ export class RobotScene {
   private linkAxisList : BABYLON.PositionGizmo[] = [];
   private jointRotationGizmos : BABYLON.RotationGizmo[] = [];
   private linkRotationGizmos : BABYLON.RotationGizmo[] = [];
+  private jointExerciseGizmos : BABYLON.Gizmo[] = [];
   private worldAxis : BABYLON.TransformNode | undefined = undefined;
   private worldAxisSize = 8.0;
   private selectedVisual : Visual | undefined = undefined;
+  private hoveredJoint : Joint | undefined = undefined;
+  private utilLayer : BABYLON.UtilityLayerRenderer | undefined = undefined;
       
 
   clearStatus() {
@@ -82,12 +85,14 @@ export class RobotScene {
   
     if (whichAxis.length === 0) {
       if (jointOrLink) {
-        this.currentRobot.joints.forEach((j: any) => {
+        // Use Array.from to correctly iterate through the Map
+        Array.from(this.currentRobot.joints.entries()).forEach(([name, j]) => {
           this.addAxisToTransform(whichAxis, scene, layer, j.transform);
         });
       } else {
-        this.currentRobot.links.forEach((l: any) => {
-          l.visuals.forEach((v: any) => {
+        // Use Array.from to correctly iterate through the Map
+        Array.from(this.currentRobot.links.entries()).forEach(([name, l]) => {
+          l.visuals.forEach((v: Visual) => {
             this.addAxisToTransform(whichAxis, scene, layer, v.transform);
           });
         });
@@ -146,12 +151,14 @@ export class RobotScene {
     let whichList = jointOrLink ? this.jointRotationGizmos : this.linkRotationGizmos;
     if (whichList.length === 0) {
       if (jointOrLink) {
-        this.currentRobot.joints.forEach((j: any) => {
+        // Use Array.from to correctly iterate through the Map
+        Array.from(this.currentRobot.joints.entries()).forEach(([name, j]) => {
           this.addRotationToTransform(whichList, scene, layer, j.transform);
         });
       } else {
-        this.currentRobot.links.forEach((l: any) => {
-          l.visuals.forEach((v: any) => {
+        // Use Array.from to correctly iterate through the Map
+        Array.from(this.currentRobot.links.entries()).forEach(([name, l]) => {
+          l.visuals.forEach((v: Visual) => {
             this.addRotationToTransform(whichList, scene, layer, v.transform);
           });
         });
@@ -162,9 +169,117 @@ export class RobotScene {
     }
   }
   
+  clearJointExerciseGizmos() {
+    this.jointExerciseGizmos.forEach((g) => {
+      g.dispose();
+    });
+    this.jointExerciseGizmos = [];
+  }
+
+  addExerciseGizmoToJoint(joint: Joint, scene: BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer) {
+    if (!joint.transform) {
+      console.log(`No transform for joint: ${joint.name}`);
+      return;
+    }
+
+    console.log(`Creating gizmo for joint: ${joint.name}, type: ${joint.type}`);
+
+    let gizmo: BABYLON.Gizmo | undefined;
+
+    // Only create gizmos for non-fixed joints
+    if (joint.type === JointType.Fixed) {
+      return;
+    }
+    
+    switch (joint.type) {
+      case JointType.Revolute:
+      case JointType.Continuous:
+        // For revolute and continuous joints, create a rotation gizmo that aligns with the joint axis
+        const rotationGizmo = new BABYLON.RotationGizmo(layer);
+        rotationGizmo.scaleRatio = .5; // Much larger for better visibility
+        rotationGizmo.attachedNode = joint.transform;
+
+        // Disable all axes except the one that aligns with the joint's rotation axis
+        // This doesn't work - bug?
+        //rotationGizmo.xGizmo.isEnabled = Math.abs(joint.axis.x) > 0.5;
+        //rotatonGizmo.yGizmo.isEnabled = Math.abs(joint.axis.y) > 0.5;
+        //rotationGizmo.zGizmo.isEnabled = Math.abs(joint.axis.z) > 0.5;
+
+
+        if (Math.abs(joint.axis.x) < 0.5) {
+          rotationGizmo.xGizmo.isEnabled = false;
+        }
+
+        if (Math.abs(joint.axis.y) < 0.5) {
+          rotationGizmo.yGizmo.isEnabled = false;
+        }
+
+        if (Math.abs(joint.axis.z) < 0.5) {
+          rotationGizmo.zGizmo.isEnabled = false;
+        }
+
+        // Make sure at least one axis is enabled if the joint axis values are too small
+        if (!rotationGizmo.xGizmo.isEnabled && !rotationGizmo.yGizmo.isEnabled && !rotationGizmo.zGizmo.isEnabled) {
+          console.log(`Joint ${joint.name} has no dominant axis, defaulting to x-axis`);
+          rotationGizmo.xGizmo.isEnabled = true;
+        }
+        
+        gizmo = rotationGizmo;
+        break;
+        
+      case JointType.Prismatic:
+        // For prismatic joints, create a position gizmo limited to one axis
+        const positionGizmo = new BABYLON.PositionGizmo(layer);
+        positionGizmo.scaleRatio = 2.0;
+        positionGizmo.attachedNode = joint.transform;
+        
+        // Enable only the axis that aligns with the joint's translation axis
+        positionGizmo.xGizmo.isEnabled = Math.abs(joint.axis.x) > 0.5;
+        positionGizmo.yGizmo.isEnabled = Math.abs(joint.axis.y) > 0.5;
+        positionGizmo.zGizmo.isEnabled = Math.abs(joint.axis.z) > 0.5;
+        
+        gizmo = positionGizmo;
+        break;
+        
+      case JointType.Planar:
+      case JointType.Floating:
+        // For planar and floating joints, simplified implementation
+        const floatingGizmo = new BABYLON.PositionGizmo(layer);
+        floatingGizmo.scaleRatio = 2.0;
+        floatingGizmo.attachedNode = joint.transform;
+        
+        gizmo = floatingGizmo;
+        break;
+    }
+    
+    if (gizmo) {
+      console.log(`Added gizmo to joint: ${joint.name}`);
+      this.jointExerciseGizmos.push(gizmo);
+    } else {
+      console.log(`Failed to create gizmo for joint: ${joint.name}`);
+    }
+  }
+  
+  updateJointStatusLabel(joint: Joint) {
+    if (!joint.transform) return;
+    
+    this.statusLabel.text = joint.name + 
+      "\nType: " + joint.type +
+      "\nLimits: " + joint.lowerLimit.toFixed(2) + " to " + joint.upperLimit.toFixed(2) +
+      "\nPosition: " + joint.transform.position.x.toFixed(3) + "," + 
+                      joint.transform.position.y.toFixed(3) + "," +
+                      joint.transform.position.z.toFixed(3) +
+      "\nRotation: " + joint.transform.rotation.x.toFixed(3) + "," +
+                      joint.transform.rotation.y.toFixed(3) + "," +
+                      joint.transform.rotation.z.toFixed(3);
+    this.statusLabel.linkOffsetY = -100;
+    this.statusLabel.linkWithMesh(joint.transform);
+  }
+  
   toggleCollision() {
     if (this.currentRobot) {
-      this.currentRobot.links.forEach((link: Link, name: string) => {
+      // Use Array.from to safely iterate through Map entries
+      Array.from(this.currentRobot.links.entries()).forEach(([name, link]) => {
         link.collisions.forEach((c: Visual) => {
             c.setEnabled(!c.isEnabled());
         });
@@ -174,7 +289,8 @@ export class RobotScene {
 
   toggleVisuals() {
     if (this.currentRobot) {
-      this.currentRobot.links.forEach((link: Link, name: string) => {
+      // Use Array.from to safely iterate through Map entries  
+      Array.from(this.currentRobot.links.entries()).forEach(([name, link]) => {
         link.visuals.forEach((v: Visual) => {
             v.setEnabled(!v.isEnabled());
         });
@@ -184,7 +300,8 @@ export class RobotScene {
 
   toggleBoundingBoxes() {
     if (this.currentRobot) {
-      this.currentRobot.links.forEach((link: Link, name: string) => {
+      // Use Array.from to safely iterate through Map entries
+      Array.from(this.currentRobot.links.entries()).forEach(([name, link]) => {
         link.visuals.forEach((v: Visual) => {
             v.geometry?.meshes?.forEach((m: BABYLON.AbstractMesh) => {
               m.showBoundingBox = !m.showBoundingBox;
@@ -327,27 +444,33 @@ export class RobotScene {
     toolbar.isVertical = false;
     this.UILayer.addControl(toolbar);
   
-    var utilLayer = new BABYLON.UtilityLayerRenderer(this.scene);
+    // Create a utility layer with specific settings to ensure gizmo visibility
+    this.utilLayer = new BABYLON.UtilityLayerRenderer(this.scene);
+    this.utilLayer.utilityLayerScene.autoClearDepthAndStencil = false; // Helps with depth sorting
+    this.utilLayer.shouldRender = true; // Ensure the layer renders
+    this.utilLayer.onlyCheckPointerDownEvents = false; // Respond to all pointer events
   
-    const gizmoManager = new BABYLON.GizmoManager(this.scene);
+    const gizmoManager = new BABYLON.GizmoManager(this.scene, 5, this.utilLayer);
     gizmoManager.usePointerToAttachGizmos = false;
-
+    gizmoManager.positionGizmoEnabled = true;
+    gizmoManager.rotationGizmoEnabled = true;
+    
     this.createWorldAxis();
   
     this.createButton(toolbar, "jointAxisButton", "Joint Axis", this.scene, () => {
-      this.toggleAxisOnRobot(true, this.scene, utilLayer);
+      this.toggleAxisOnRobot(true, this.scene, this.utilLayer!);
     });
   
     this.createButton(toolbar, "linkAxisButton", "Link Axis", this.scene, () => {
-      this.toggleAxisOnRobot(false, this.scene, utilLayer);
+      this.toggleAxisOnRobot(false, this.scene, this.utilLayer!);
     });
   
     this.createButton(toolbar, "jointRotationButton", "Joint Rotation", this.scene, () => {  
-      this.toggleAxisRotationOnRobot(true, this.UILayer, this.scene, utilLayer);
+      this.toggleAxisRotationOnRobot(true, this.UILayer, this.scene, this.utilLayer!);
     });
   
     this.createButton(toolbar, "linkRotationButton", "Link Rotation", this.scene, () => {  
-      this.toggleAxisRotationOnRobot(false, this.UILayer, this.scene, utilLayer);
+      this.toggleAxisRotationOnRobot(false, this.UILayer, this.scene, this.utilLayer!);
     });
 
     this.createButton(toolbar, "worldAxis", "World Axis", this.scene, () => {  
@@ -358,10 +481,9 @@ export class RobotScene {
       this.toggleCollision();
     });
 
-
     /*
     // Currently disabled because meshes don't share a common root, so doesn't work on all types yet.
-    this.createButton(toolbar, "visuls", "Visuals", this.scene, () => {  
+    this.createButton(toolbar, "visuals", "Visuals", this.scene, () => {  
       this.toggleVisuals();
     });
     */
@@ -381,7 +503,106 @@ export class RobotScene {
         var ray = that.scene.createPickingRay(that.scene.pointerX, that.scene.pointerY, BABYLON.Matrix.Identity(), that.camera, false);	
 
         var hit = that.scene.pickWithRay(ray);
-        if (hit?.pickedMesh) {
+        if (hit?.pickedMesh && that.currentRobot) {
+          let foundJoint: Joint | undefined;
+          
+          // Convert Map entries to array and iterate through them safely
+          Array.from(that.currentRobot.joints.entries()).forEach(([name, j]) => {
+            // Skip fixed joints since they can't be exercised
+            if (j.type === JointType.Fixed) return;
+            
+            if (j.transform) {
+              // Check if the picked mesh is a child of this joint's transform
+              if (hit?.pickedMesh?.parent === j.transform) {
+                foundJoint = j;
+                console.log(`Found joint (direct parent): ${j.name}`);
+                return; // Exit the forEach early
+              }
+              
+              // Check if we directly clicked on a joint's visual representation
+              if (hit?.pickedMesh && hit?.pickedMesh.name.includes(j.name)) {
+                foundJoint = j;
+                console.log(`Found joint (name match): ${j.name}`);
+                return; // Exit the forEach early
+              }
+              
+              // Handle cases where meshes use the bone system or other hierarchical structures
+              // Check if the mesh is in the hierarchy under the joint transform
+              let parentNode = hit?.pickedMesh?.parent;
+              while (parentNode && !foundJoint) {
+                if (parentNode === j.transform) {
+                  foundJoint = j;
+                  console.log(`Found joint (hierarchy): ${j.name}`);
+                  return; // Exit the forEach early
+                }
+                parentNode = parentNode.parent;
+              }
+              
+              // If we have a child link, check if the mesh belongs to any visual in that link
+              if (j.child && !foundJoint) {
+                j.child.visuals.forEach(visual => {
+                  if (visual.geometry?.meshes) {
+                    visual.geometry.meshes.forEach(mesh => {
+                      if (mesh === hit?.pickedMesh) {
+                        foundJoint = j;
+                        console.log(`Found joint (child link visual): ${j.name}`);
+                        return; // Exit inner forEach
+                      }
+                    });
+                  }
+                });
+                
+                // Check if the mesh is part of a skeleton in the child link
+                j.child.visuals.forEach(visual => {
+                  if (visual.geometry?.meshes) {
+                    // Check if any of the meshes have a skeleton that contains the picked mesh
+                    visual.geometry.meshes.forEach(mesh => {
+                      if (mesh.skeleton) {
+                        mesh.skeleton.bones.forEach(bone => {
+                          bone.getChildMeshes().forEach(boneMesh => {
+                            if (boneMesh === hit?.pickedMesh) {
+                              foundJoint = j;
+                              console.log(`Found joint (skeleton): ${j.name}`);
+                              return; // Exit inner forEach
+                            }
+                          });
+                        });
+                      }
+                    });
+                  }
+                });
+              }
+            }
+          });
+          
+          // Process the found joint if any
+          if (foundJoint) {
+            console.log(`Creating gizmo for joint: ${foundJoint.name}`);
+            
+            // If it's different from the currently selected joint, update the gizmo
+            if (foundJoint !== that.hoveredJoint) {
+              that.clearJointExerciseGizmos();
+              that.hoveredJoint = foundJoint;
+              
+              // Add the gizmo to the joint using our custom layer
+              that.addExerciseGizmoToJoint(foundJoint, that.scene!, that.utilLayer!);
+              
+              // Update status label with joint info
+              if (foundJoint.transform) {
+                  that.statusLabel.text = 
+                    "\nType: " + foundJoint.type +
+                    "\nLimits: " + foundJoint.lowerLimit.toFixed(2) + " to " + foundJoint.upperLimit.toFixed(2);
+                
+                  that.statusLabel.linkOffsetY = -100;
+                  that.statusLabel.linkWithMesh(foundJoint.transform);
+              }
+            }
+          } else {
+            that.hoveredJoint = undefined;
+            that.clearJointExerciseGizmos();
+            that.clearStatus();
+          }
+
           // find the visual that has this mesh
           let found = false;
           that.currentRobot?.links.forEach((link: Link, name: string) => {
@@ -392,13 +613,6 @@ export class RobotScene {
                   that.selectedVisual.geometry?.meshes?.forEach((m: BABYLON.AbstractMesh) => {
                     m.showBoundingBox = true;
                   });
-                          let bound : BABYLON.BoundingBox = hit.pickedMesh.getBoundingInfo().boundingBox;
-                  if (that.selectedVisual?.transform) {
-                    that.statusLabel.text = v.name + "\n" + 
-                      "(" + bound.maximum.x.toFixed(6) + ", " + bound.maximum.y.toFixed(6) + ", " + bound.maximum.z.toFixed(6) + ")\n" + 
-                      "(" + bound.minimum.x.toFixed(6) + ", " + bound.minimum.y.toFixed(6) + ", " + bound.minimum.z.toFixed(6) + ")";
-                    that.statusLabel.linkWithMesh(m);
-                  }
                 }
               });
             });
