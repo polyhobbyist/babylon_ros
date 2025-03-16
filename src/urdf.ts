@@ -120,9 +120,17 @@ export async function deserializeJoint(jointObject: any) : Promise<Joint> {
       throw new Error(`Link ${joint.name} must have a type.`);
     }
 
+    if (jointObject.axis?.length == 1) {
+      joint.axis = parseVector(jointObject.axis[0].$.xyz);
+    } else if (jointObject.axis?.length > 1) {
+        throw new Error(`Joint ${jointObject.$?.name} has multiple axis; should only have 1.`);
+    }
+
     if (jointObject.limit?.length == 1) {
         joint.lowerLimit = parseFloat(jointObject.limit[0].$?.lower);
         joint.upperLimit = parseFloat(jointObject.limit[0].$?.upper);
+    } else if (jointObject.limit?.length > 1) {
+        throw new Error(`Joint ${jointObject.$?.name} has multiple limits; should only have 1.`);
     } 
     
     if ((joint.type == JointType.Prismatic ||

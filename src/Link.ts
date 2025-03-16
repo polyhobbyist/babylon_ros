@@ -30,10 +30,10 @@ export class Link {
             for (let collision of this.collisions) {
                 collision.material = materialMap.get("collision");
                 collision.create(scene, materialMap);
-                collision.setEnabled(false);
                 if (collision.transform) {
                     collision.transform.parent = this.transform;
                 }
+                collision.setEnabled(false);
             }
         }
     }
