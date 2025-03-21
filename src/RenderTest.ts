@@ -7,31 +7,18 @@ import {Link} from './Link';
 import {Visual} from './Visual';
 import { RobotScene } from './RobotScene';
 
-import * as GUI from 'babylonjs-gui';
+import * as GUI3D from 'babylonjs-gui';
 import * as ColladaFileLoader from '@polyhobbyist/babylon-collada-loader';
 
 let currentRobotScene : RobotScene | undefined = undefined;
 
 function addTestToRobotScene(robotScene : RobotScene) {
-  if (robotScene.UILayer === undefined) {
-    return
+  if (!robotScene.uiScene || !robotScene.UI3DManager) {
+    return;
   }
 
-  var testSelection = new GUI.SelectionPanel("tests");
-  testSelection.color = "white";
-  testSelection.width = 0.25;
-  testSelection.height = 0.48;
-  testSelection.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-  testSelection.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-
-  robotScene.UILayer.addControl(testSelection);
-
-  var basicGroup = new GUI.RadioGroup("Basic Tests");
-  testSelection.addGroup(basicGroup);
-
-  basicGroup.groupPanel.color = "white";
-
-  var basicTestList = [ 
+  
+  var testList = [ 
     {name: "Basic", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic.urdf"},
     {name: "Basic Joint", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_joint.urdf"},
     {name: "Basic Revolute Joint", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_joint_with_effort.urdf"},
@@ -41,49 +28,30 @@ function addTestToRobotScene(robotScene : RobotScene) {
     {name: "Orientation", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/orientation.urdf"},
     {name: "Bad", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/bad.urdf"},
     {name: "DAE", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/leo_chassis.urdf"},
-  ];
-
-  var robotTestList = [ 
     {name: "leo", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/leo.urdf"},
     {name: "BB", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/bb.urdf"},
     {name: "Motoman", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/motoman.urdf"},
     {name: "Arti Robot", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/arti.urdf"},
   ];
 
-  basicTestList.forEach((t) => {
-    basicGroup.addRadio(t.name, async () => {
+  // Add buttons for basic tests
+  testList.forEach((t) => {
+    const button = new GUI3D.TouchHolographicButton(t.name);
+    const buttonText = new GUI3D.TextBlock();
+    buttonText.text = t.name;
+    buttonText.color = "white";
+    buttonText.fontSize = 12;
+    button.content = buttonText;
+    
+    button.onPointerUpObservable.add(async () => {
       const response = await fetch(t.url);
       const urdfText = await response.text();
       
       robotScene.applyURDF(urdfText);
     });
+    
+    robotScene.acitonMenu?.addButton(button);
   });
-  
-  var robotTestGroup = new GUI.RadioGroup("Robot Tests");
-  testSelection.addGroup(robotTestGroup);
-
-  robotTestGroup.groupPanel.color = "white";
-
-  robotTestList.forEach((t) => {
-    robotTestGroup.addRadio(t.name, async () => {
-      const response = await fetch(t.url);
-      const urdfText = await response.text();
-      
-      robotScene.applyURDF(urdfText);
-    });
-  });
-
-  // Recursively set the color to white
-  function setControlColor(control : GUI.Control) {
-    control.color = "white";
-    if (control instanceof GUI.Container) {
-      control.children.forEach((c) => {
-        setControlColor(c);
-      });
-    }
-  }
-
-  setControlColor(testSelection);
 }
 
 // Main function that gets executed once the webview DOM loads
@@ -98,12 +66,14 @@ export async function RenderTestMain() {
   }
 
   currentRobotScene.scene.debugLayer.show();
-  currentRobotScene.createUI();
+  await currentRobotScene.createUI();
   addTestToRobotScene(currentRobotScene);
 
   currentRobotScene.engine.runRenderLoop(function () {
-    if (currentRobotScene !== undefined && currentRobotScene.scene !== undefined) {
+    if (currentRobotScene !== undefined && currentRobotScene.scene !== undefined && currentRobotScene.uiScene !== undefined) {
+      // Update the scene
       currentRobotScene.scene.render();
+      currentRobotScene.uiScene.render();
     }
   });
   

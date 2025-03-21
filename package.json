@@ -19,6 +19,7 @@
   "scripts": {
     "test": "jest --ci --coverage --reporters=default --reporters=jest-junit",
     "build": "webpack --mode development",
+    "build-verbose": "webpack --mode development --stats verbose",
     "watch": "webpack --mode development --watch",
     "pretest": "npm run build",
     "prepublishOnly": "webpack --mode=production"
