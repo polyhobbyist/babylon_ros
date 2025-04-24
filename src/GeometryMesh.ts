@@ -31,7 +31,7 @@ export class Mesh implements IGeometry {
                     transformNode.parent = this.transform;
                 }
 
-                if (this.ext.indexOf('.stl') !== -1) {
+                if (this.ext.toLowerCase().indexOf('.stl') !== -1) {
                     this.meshes.forEach(m => {
                         if (this.transform != undefined) {
                             m.addRotation(0, 0, Math.PI).addRotation(Math.PI/2, 0, 0);

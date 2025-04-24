@@ -14,6 +14,7 @@ export class RobotScene {
 
   public scene : BABYLON.Scene | undefined = undefined;
   
+  public currentURDF : string | undefined = undefined;
   public currentRobot : Robot | undefined = undefined;
   public UILayer : GUI.AdvancedDynamicTexture | undefined = undefined;
   
@@ -557,6 +558,12 @@ export class RobotScene {
       this.toggleVisuals();
     });
 
+    this.createButton(toolbar, "reset", "Reset", this.scene, () => {  
+      if (this.currentURDF !== undefined) {
+        this.applyURDF(this.currentURDF);
+      }
+    });
+
     let that = this;
     this.scene.onPointerDown = function castRay() {
       if (that.scene && that.camera) {
@@ -675,6 +682,7 @@ export class RobotScene {
 
     try {
       if (this.scene) {
+        this.currentURDF = urdfText;
         this.currentRobot = await urdf.deserializeUrdfToRobot(urdfText);
         this.currentRobot.create(this.scene);
       }
