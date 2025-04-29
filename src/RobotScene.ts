@@ -33,6 +33,7 @@ export class RobotScene {
   private selectedVisual : Visual | undefined = undefined;
   private hoveredJoint : Joint | undefined = undefined;
   private utilLayer : BABYLON.UtilityLayerRenderer | undefined = undefined;
+  private jointGizmo: BABYLON.Gizmo | undefined;
       
 
   clearStatus() {
@@ -185,8 +186,6 @@ export class RobotScene {
 
     console.log(`Creating gizmo for joint: ${joint.name}, type: ${joint.type}`);
 
-    let gizmo: BABYLON.Gizmo | undefined;
-
     // Only create gizmos for non-fixed joints
     if (joint.type === JointType.Fixed) {
       return;
@@ -197,7 +196,7 @@ export class RobotScene {
       case JointType.Continuous:
         // For revolute and continuous joints, create a rotation gizmo that aligns with the joint axis
         const rotationGizmo = new BABYLON.RotationGizmo(layer);
-        rotationGizmo.scaleRatio = .5; // Much larger for better visibility
+        rotationGizmo.scaleRatio = .75; // Much larger for better visibility
         rotationGizmo.attachedNode = joint.transform;
 
         // Disable all axes except the one that aligns with the joint's rotation axis
@@ -242,15 +241,15 @@ export class RobotScene {
           // Store initial rotation to track relative changes
           let startRotation = Number(joint.transform.rotation[axisKey as keyof BABYLON.Vector3]);
           let currentRotation = Number(startRotation);
-          let lastRotation = Number(startRotation);
 
-          activeGizmo.dragBehavior.onDragObservable.add(() => {
+          activeGizmo.dragBehavior.onDragObservable.add((evt: any) => {
             if (!joint.transform) return;
 
             // Calculate how much rotation changed in this drag event
-            const newRotation = joint.transform.rotation[axisKey as keyof BABYLON.Vector3];
-            const delta = Number(newRotation) - Number(lastRotation);
-            lastRotation = Number(newRotation);
+            const newRotation = Number(joint.transform.rotation[axisKey as keyof BABYLON.Vector3]);
+            const delta = evt.delta[axisKey as keyof BABYLON.Vector3];
+
+            console.log(`Joint ${joint.name} new rotation: ${newRotation}, delta: ${delta}`);
 
             // Update the accumulated rotation
             currentRotation += delta;
@@ -259,11 +258,14 @@ export class RobotScene {
             if (joint.type === JointType.Revolute) {
               const relativeToStart = currentRotation - startRotation;
               let correction : number = 0;
+
+              console.log(`Joint ${joint.name} rotation: ${relativeToStart}`);
               
               // Clamp the rotation within the limits
-              const clampedRotation = Math.max(joint.lowerLimit, Math.min(joint.upperLimit, relativeToStart));
+              const clampedRotation = Math.max(joint.lowerLimit, Math.min(joint.upperLimit, newRotation));
               correction = clampedRotation - relativeToStart;
 
+              console.log(`Joint ${joint.name} clamped rotation: ${clampedRotation}`);
               const updatedRotation = new BABYLON.Vector3(
                 axisKey === "x" ? joint.transform.rotation.x + correction : joint.transform.rotation.x,
                 axisKey === "y" ? joint.transform.rotation.y + correction : joint.transform.rotation.y,
@@ -277,7 +279,7 @@ export class RobotScene {
           });
         }
         
-        gizmo = rotationGizmo;
+        this.jointGizmo = rotationGizmo;
         break;
         
       case JointType.Prismatic:
@@ -299,7 +301,7 @@ export class RobotScene {
           positionGizmo.zGizmo.isEnabled = false;
         }
         
-        gizmo = positionGizmo;
+        this.jointGizmo = positionGizmo;
         break;
         
       case JointType.Planar:
@@ -309,15 +311,8 @@ export class RobotScene {
         floatingGizmo.scaleRatio = .5;
         floatingGizmo.attachedNode = joint.transform;
         
-        gizmo = floatingGizmo;
+        this.jointGizmo = floatingGizmo;
         break;
-    }
-    
-    if (gizmo) {
-      console.log(`Added gizmo to joint: ${joint.name}`);
-      this.jointExerciseGizmos.push(gizmo);
-    } else {
-      console.log(`Failed to create gizmo for joint: ${joint.name}`);
     }
   }
   
