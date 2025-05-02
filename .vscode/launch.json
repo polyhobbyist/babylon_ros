@@ -5,9 +5,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "msedge",
+      "type": "chrome",
       "request": "launch",
       "name": "Open viewer.html",
+      "runtimeExecutable": "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
       "file": "c:\\ws\\babylon_ros\\web\\viewer.html"
     }
   ]

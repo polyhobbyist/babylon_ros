@@ -21,7 +21,7 @@
     <parent link="base_link"/>
     <child link="right_leg"/>
     <origin xyz="0 -0.22 0.25"/>
-    <limit effort="1.1369" lower="0" upper="10" velocity="4.36" />
+    <limit effort="1.1369" lower="-1" upper="1" velocity="4.36" />
   </joint>
 
 </robot>

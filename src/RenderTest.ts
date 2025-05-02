@@ -20,7 +20,7 @@ function addTestToRobotScene(robotScene : RobotScene) {
   var testSelection = new GUI.SelectionPanel("tests");
   testSelection.color = "white";
   testSelection.width = 0.25;
-  testSelection.height = 0.48;
+  testSelection.height = .75;
   testSelection.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
   testSelection.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
 
@@ -48,6 +48,7 @@ function addTestToRobotScene(robotScene : RobotScene) {
     {name: "BB", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/bb.urdf"},
     {name: "Motoman", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/motoman.urdf"},
     {name: "Arti Robot", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/arti.urdf"},
+    {name: "inline", url: ""},
   ];
 
   basicTestList.forEach((t) => {
@@ -66,9 +67,42 @@ function addTestToRobotScene(robotScene : RobotScene) {
 
   robotTestList.forEach((t) => {
     robotTestGroup.addRadio(t.name, async () => {
+      if (t.name === "inline") {
+        const inlineURDF = `<?xml version="1.0"?>
+<robot name="origins">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <cylinder length="0.6" radius="0.2"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <link name="right_leg">
+    <visual>
+      <geometry>
+        <box size="0.6 0.1 0.2"/>
+      </geometry>
+      <origin rpy="0 1.57075 0" xyz="0 0 -0.3"/>
+    </visual>
+  </link>
+
+  <joint name="base_to_right_leg" type="revolute">
+    <parent link="base_link"/>
+    <child link="right_leg"/>
+    <origin xyz="0 -0.22 0.25"/>
+    <limit effort="1.1369" lower="-1" upper="1" velocity="4.36" />
+  </joint>
+
+</robot>
+`;
+        robotScene.applyURDF(inlineURDF);
+        return;
+      }
+      
       const response = await fetch(t.url);
       const urdfText = await response.text();
-      
+
       robotScene.applyURDF(urdfText);
     });
   });
