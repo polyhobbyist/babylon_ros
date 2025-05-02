@@ -28,7 +28,6 @@ export class RobotScene {
   private linkAxisList : BABYLON.PositionGizmo[] = [];
   private jointRotationGizmos : BABYLON.RotationGizmo[] = [];
   private linkRotationGizmos : BABYLON.RotationGizmo[] = [];
-  private jointExerciseGizmos : BABYLON.Gizmo[] = [];
   private worldAxis : BABYLON.TransformNode | undefined = undefined;
   private worldAxisSize = 8.0;
   private selectedVisual : Visual | undefined = undefined;
@@ -174,10 +173,10 @@ export class RobotScene {
   }
   
   clearJointExerciseGizmos() {
-    this.jointExerciseGizmos.forEach((g) => {
-      g.dispose();
-    });
-    this.jointExerciseGizmos = [];
+    this.planeRotationGizmo?.dispose();
+    this.planeRotationGizmo = undefined;
+    this.jointGizmo?.dispose();
+    this.jointGizmo = undefined;
   }
 
   addExerciseGizmoToJoint(joint: Joint, scene: BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer) {
@@ -202,7 +201,9 @@ export class RobotScene {
           this.planeRotationGizmo = new JointRotationGizmo(
             new BABYLON.Vector3(0, 1, 0), // Y axis
             BABYLON.Color3.Green(),
-            layer
+            layer,
+            joint.lowerLimit,
+            joint.upperLimit
           );
         } else if (Math.abs(joint.axis.z) > 0.5) {
           console.log(`Joint ${joint.name} is primarily rotating around z-axis`);
@@ -210,22 +211,24 @@ export class RobotScene {
           this.planeRotationGizmo = new JointRotationGizmo(
             new BABYLON.Vector3(0, 0, 1), // Z axis
             BABYLON.Color3.Blue(),
-            layer
+            layer,
+            joint.lowerLimit,
+            joint.upperLimit
           );
         } else {
           console.log(`Joint ${joint.name} rotating around x-axis`);
           this.planeRotationGizmo = new JointRotationGizmo(
             new BABYLON.Vector3(1, 0, 0), // X axis
             BABYLON.Color3.Red(),
-            layer
+            layer,
+            joint.lowerLimit,
+            joint.upperLimit
           );
         }
         
         // Configure the rotation gizmo
         this.planeRotationGizmo.scaleRatio = 0.75; // Much larger for better visibility
         this.planeRotationGizmo.attachedNode = joint.transform;
-        this.planeRotationGizmo.lowerLimit = joint.lowerLimit;
-        this.planeRotationGizmo.upperLimit = joint.upperLimit;
         this.planeRotationGizmo.enableLimits = true;
         
         this.planeRotationGizmo.dragBehavior.onDragObservable.add(() => {

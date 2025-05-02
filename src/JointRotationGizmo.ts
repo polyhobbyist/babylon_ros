@@ -1,33 +1,11 @@
 import * as BABYLON from 'babylonjs';
 
-// Import BabylonJS types directly
-import { Observable } from "babylonjs/Misc/observable";
-import { Vector3, Matrix, Quaternion, TmpVectors, Vector2 } from "babylonjs/Maths/math.vector";
-import { Color3 } from "babylonjs/Maths/math.color";
-import { Mesh } from "babylonjs/Meshes/mesh";
-import { AbstractMesh } from "babylonjs/Meshes/abstractMesh";
-import { TransformNode } from "babylonjs/Meshes/transformNode";
-import { Node } from "babylonjs/node";
-import { PointerDragBehavior } from "babylonjs/Behaviors/Meshes/pointerDragBehavior";
-import { Gizmo, GizmoAxisCache, IGizmo } from "babylonjs/Gizmos/gizmo";
-import { UtilityLayerRenderer } from "babylonjs/Rendering/utilityLayerRenderer";
-import { StandardMaterial } from "babylonjs/Materials/standardMaterial";
-import { ShaderMaterial } from "babylonjs/Materials/shaderMaterial";
-import { Effect } from "babylonjs/Materials/effect";
-import { CreatePlane } from "babylonjs/Meshes/Builders/planeBuilder";
-import { CreateTorus } from "babylonjs/Meshes/Builders/torusBuilder";
-import { Epsilon } from "babylonjs/Maths/math.constants";
-import { Logger } from "babylonjs/Misc/logger";
-import { PointerInfo } from "babylonjs/Events/pointerEvents";
-import { Observer } from "babylonjs/Misc/observable";
-import { Nullable } from "babylonjs/types";
-
 /**
  * Interface for joint rotation gizmo
  */
-export interface IJointRotationGizmo extends IGizmo {
+export interface IJointRotationGizmo extends BABYLON.IGizmo {
     /** Drag behavior responsible for the gizmos dragging interactions */
-    dragBehavior: PointerDragBehavior;
+    dragBehavior: BABYLON.PointerDragBehavior;
     /** Drag distance in babylon units that the gizmo will snap to when dragged */
     snapDistance: number;
     /** Sensitivity factor for dragging */
@@ -42,31 +20,31 @@ export interface IJointRotationGizmo extends IGizmo {
      * Event that fires each time the gizmo snaps to a new location.
      * * snapDistance is the change in distance
      */
-    onSnapObservable: Observable<{ snapDistance: number }>;
+    onSnapObservable: BABYLON.Observable<{ snapDistance: number }>;
     /** Accumulated relative angle value for rotation on the axis. */
     angle: number;
     /** If the gizmo is enabled */
     isEnabled: boolean;
 
     /** Default material used to render when gizmo is not disabled or hovered */
-    coloredMaterial: StandardMaterial;
+    coloredMaterial: BABYLON.StandardMaterial;
     /** Material used to render when gizmo is hovered with mouse */
-    hoverMaterial: StandardMaterial;
+    hoverMaterial: BABYLON.StandardMaterial;
     /** Color used to render the drag angle sector when gizmo is rotated with mouse */
-    rotationColor: Color3;
+    rotationColor: BABYLON.Color3;
     /** Material used to render when gizmo is disabled. typically grey. */
-    disableMaterial: StandardMaterial;
+    disableMaterial: BABYLON.StandardMaterial;
 }
 
 /**
  * Joint rotation gizmo
  */
-export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
+export class JointRotationGizmo extends BABYLON.Gizmo implements IJointRotationGizmo {
     /**
      * Drag behavior responsible for the gizmos dragging interactions
      */
-    public dragBehavior: PointerDragBehavior;
-    protected _pointerObserver: Nullable<Observer<PointerInfo>> = null;
+    public dragBehavior: BABYLON.PointerDragBehavior;
+    protected _pointerObserver: BABYLON.Nullable<BABYLON.Observer<BABYLON.PointerInfo>> = null;
 
     /**
      * Rotation distance in radians that the gizmo will snap to (Default: 0)
@@ -76,7 +54,7 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
      * Event that fires each time the gizmo snaps to a new location.
      * * snapDistance is the change in distance
      */
-    public onSnapObservable = new Observable<{ snapDistance: number }>();
+    public onSnapObservable = new BABYLON.Observable<{ snapDistance: number }>();
 
     /**
      * The maximum angle between the camera and the rotation allowed for interaction
@@ -110,14 +88,14 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
     public enableLimits: boolean = true;
 
     protected _isEnabled: boolean = true;
-    protected _parent: Nullable<any> = null; // Using any instead of RotationGizmo as we don't need full type
-    protected _coloredMaterial: StandardMaterial;
-    protected _hoverMaterial: StandardMaterial;
-    protected _disableMaterial: StandardMaterial;
-    protected _gizmoMesh: Mesh;
-    protected _rotationDisplayPlane: Mesh;
+    protected _parent: BABYLON.Nullable<any> = null; // Using any instead of RotationGizmo as we don't need full type
+    protected _coloredMaterial: BABYLON.StandardMaterial;
+    protected _hoverMaterial: BABYLON.StandardMaterial;
+    protected _disableMaterial: BABYLON.StandardMaterial;
+    protected _gizmoMesh: BABYLON.Mesh;
+    protected _rotationDisplayPlane: BABYLON.Mesh;
     protected _dragging: boolean = false;
-    protected _angles = new Vector3();
+    protected _angles = new BABYLON.Vector3();
 
     // Shader for rotation visualization
     protected static _RotationGizmoVertexShader = `
@@ -131,9 +109,7 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
         void main(void) {
             gl_Position = worldViewProjection * vec4(position, 1.0);
             vUV = uv;
-        }`;
-
-    // Updated fragment shader to support joint limits visualization
+        }`;    // Updated fragment shader to support joint limits visualization
     protected static _RotationGizmoFragmentShader = `
         precision highp float;
         varying vec2 vUV;
@@ -141,44 +117,46 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
         uniform vec3 angles;
         uniform vec3 rotationColor;
         uniform vec2 limits;
-        uniform bool enableLimits;
+        uniform float enableLimits;
 
-        #define twopi 6.283185307
-
-        void main(void) {
+        #define twopi 6.283185307        
+          void main(void) {
             vec2 uv = vUV - vec2(0.5);
             float angle = atan(uv.y, uv.x) + 3.141592;
-            float delta = gl_FrontFacing ? angles.y : -angles.y;
-            float begin = angles.x - delta * angles.z;
             float len = sqrt(dot(uv,uv));
             float opacity = 1. - step(0.5, len);
             
-            // Default behavior for full rotation
-            float start = (begin < (begin + delta)) ? begin : (begin + delta);
-            float end = (begin > (begin + delta)) ? begin : (begin + delta);
+            // Default values for when limits are disabled
+            float start = 0.0;
+            float end = twopi;
             
             // Apply joint limits if enabled
-            if (enableLimits) {
+            if (enableLimits > 0.5) {
                 // Only show the arc between lower and upper limits
                 start = limits.x;  // lowerLimit
                 end = limits.y;    // upperLimit
             }
 
             float base = abs(floor(start / twopi)) * twopi;
-            start += base;
-            end += base;
+            start = start + base;
+            end = end + base;
 
             float intensity = 0.;
+            float currentAngle = angle;
             for (int i = 0; i < 5; i++) {
-                intensity += max(step(start, angle) - step(end, angle), 0.);
-                angle += twopi;
-            }
+                intensity += max(step(start, currentAngle) - step(end, currentAngle), 0.);
+                currentAngle += twopi;
+            }            // Use constant opacity for the limits arc
+            float finalOpacity = min(intensity * 0.25, 0.8);
+            
+            // Use consistent color for the entire limits arc
+            vec3 finalColor = rotationColor;
 
-            gl_FragColor = vec4(rotationColor, min(intensity * 0.25, 0.8)) * opacity;
+            gl_FragColor = vec4(finalColor, finalOpacity) * opacity;
         }
     `;
 
-    protected _rotationShaderMaterial: ShaderMaterial;
+    protected _rotationShaderMaterial: BABYLON.ShaderMaterial;
 
     /**
      * Creates a JointRotationGizmo
@@ -195,18 +173,17 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
      * @param upperLimit Upper joint rotation limit in radians
      */
     constructor(
-        planeNormal: Vector3,
-        color: Color3 = Color3.Gray(),
-        gizmoLayer: UtilityLayerRenderer = UtilityLayerRenderer.DefaultUtilityLayer,
-        tessellation = 32,
-        parent: Nullable<any> = null,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        useEulerRotation = false,
-        thickness: number = 1,
-        hoverColor: Color3 = Color3.Yellow(),
-        disableColor: Color3 = Color3.Gray(),
+        planeNormal: BABYLON.Vector3,
+        color: BABYLON.Color3 = BABYLON.Color3.Gray(),
+        gizmoLayer: BABYLON.UtilityLayerRenderer = BABYLON.UtilityLayerRenderer.DefaultUtilityLayer,
         lowerLimit: number = -Math.PI,
-        upperLimit: number = Math.PI
+        upperLimit: number = Math.PI,
+        enableLimits: boolean = true,
+        tessellation = 32,
+        parent: BABYLON.Nullable<any> = null,
+        thickness: number = 1,
+        hoverColor: BABYLON.Color3 = BABYLON.Color3.Yellow(),
+        disableColor: BABYLON.Color3 = BABYLON.Color3.Gray(),
     ) {
         super(gizmoLayer);
         this._parent = parent;
@@ -215,25 +192,27 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
         this.lowerLimit = lowerLimit;
         this.upperLimit = upperLimit;
 
-        // Create Material
-        this._coloredMaterial = new StandardMaterial("", gizmoLayer.utilityLayerScene);
-        this._coloredMaterial.diffuseColor = color;
-        this._coloredMaterial.specularColor = color.subtract(new Color3(0.1, 0.1, 0.1));
+        this.enableLimits = enableLimits;
 
-        this._hoverMaterial = new StandardMaterial("", gizmoLayer.utilityLayerScene);
+        // Create Material
+        this._coloredMaterial = new BABYLON.StandardMaterial("", gizmoLayer.utilityLayerScene);
+        this._coloredMaterial.diffuseColor = color;
+        this._coloredMaterial.specularColor = color.subtract(new BABYLON.Color3(0.1, 0.1, 0.1));
+
+        this._hoverMaterial = new BABYLON.StandardMaterial("", gizmoLayer.utilityLayerScene);
         this._hoverMaterial.diffuseColor = hoverColor;
         this._hoverMaterial.specularColor = hoverColor;
 
-        this._disableMaterial = new StandardMaterial("", gizmoLayer.utilityLayerScene);
+        this._disableMaterial = new BABYLON.StandardMaterial("", gizmoLayer.utilityLayerScene);
         this._disableMaterial.diffuseColor = disableColor;
         this._disableMaterial.alpha = 0.4;
 
         // Build mesh on root node
-        this._gizmoMesh = new Mesh("", gizmoLayer.utilityLayerScene);
+        this._gizmoMesh = new BABYLON.Mesh("", gizmoLayer.utilityLayerScene);
         const { rotationMesh, collider } = this._createGizmoMesh(this._gizmoMesh, thickness, tessellation);
 
         // Setup Rotation Circle
-        this._rotationDisplayPlane = CreatePlane(
+        this._rotationDisplayPlane = BABYLON.CreatePlane(
             "rotationDisplay",
             {
                 size: 0.6,
@@ -246,14 +225,14 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
         this._rotationDisplayPlane.setEnabled(false);
 
         // Setup shader for visualization
-        if (!Effect.ShadersStore["rotationGizmoVertexShader"]) {
-            Effect.ShadersStore["rotationGizmoVertexShader"] = JointRotationGizmo._RotationGizmoVertexShader;
+        if (!BABYLON.Effect.ShadersStore["rotationGizmoVertexShader"]) {
+            BABYLON.Effect.ShadersStore["rotationGizmoVertexShader"] = JointRotationGizmo._RotationGizmoVertexShader;
         }
-        if (!Effect.ShadersStore["rotationGizmoFragmentShader"]) {
-            Effect.ShadersStore["rotationGizmoFragmentShader"] = JointRotationGizmo._RotationGizmoFragmentShader;
+        if (!BABYLON.Effect.ShadersStore["rotationGizmoFragmentShader"]) {
+            BABYLON.Effect.ShadersStore["rotationGizmoFragmentShader"] = JointRotationGizmo._RotationGizmoFragmentShader;
         }
         
-        this._rotationShaderMaterial = new ShaderMaterial(
+        this._rotationShaderMaterial = new BABYLON.ShaderMaterial(
             "shader",
             this.gizmoLayer.utilityLayerScene,
             {
@@ -271,28 +250,29 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
         
         // Set initial limit values in the shader
         this._rotationShaderMaterial.setVector2("limits", new BABYLON.Vector2(this.lowerLimit, this.upperLimit));
-        this._rotationShaderMaterial.setDefine("enableLimits", this.enableLimits);
+        // Use setFloat to pass boolean value (1.0 for true, 0.0 for false)
+        this._rotationShaderMaterial.setFloat("enableLimits", this.enableLimits ? 1.0 : 0.0);
 
         this._rotationDisplayPlane.material = this._rotationShaderMaterial;
         this._rotationDisplayPlane.visibility = 0.999;
 
         this._gizmoMesh.lookAt(this._rootMesh.position.add(planeNormal));
-        this._rootMesh.addChild(this._gizmoMesh, Gizmo.PreserveScaling);
+        this._rootMesh.addChild(this._gizmoMesh, BABYLON.Gizmo.PreserveScaling);
         this._gizmoMesh.scaling.scaleInPlace(1 / 3);
         
         // Add drag behavior to handle events when the gizmo is dragged
-        this.dragBehavior = new PointerDragBehavior({ dragPlaneNormal: planeNormal });
+        this.dragBehavior = new BABYLON.PointerDragBehavior({ dragPlaneNormal: planeNormal });
         this.dragBehavior.moveAttached = false;
         this.dragBehavior.maxDragAngle = JointRotationGizmo.MaxDragAngle;
         this.dragBehavior._useAlternatePickedPointAboveMaxDragAngle = true;
         this._rootMesh.addBehavior(this.dragBehavior);
 
         // Closures for drag logic
-        const lastDragPosition = new Vector3();
+        const lastDragPosition = new BABYLON.Vector3();
 
-        const rotationMatrix = new Matrix();
-        const planeNormalTowardsCamera = new Vector3();
-        let localPlaneNormalTowardsCamera = new Vector3();
+        const rotationMatrix = new BABYLON.Matrix();
+        const planeNormalTowardsCamera = new BABYLON.Vector3();
+        let localPlaneNormalTowardsCamera = new BABYLON.Vector3();
 
         this.dragBehavior.onDragStartObservable.add((e) => {
             if (this.attachedNode) {
@@ -300,7 +280,7 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
                 this._rotationDisplayPlane.setEnabled(true);
 
                 this._rotationDisplayPlane.getWorldMatrix().invertToRef(rotationMatrix);
-                Vector3.TransformCoordinatesToRef(e.dragPlanePoint, rotationMatrix, lastDragPosition);
+                BABYLON.Vector3.TransformCoordinatesToRef(e.dragPlanePoint, rotationMatrix, lastDragPosition);
 
                 this._angles.x = Math.atan2(lastDragPosition.y, lastDragPosition.x) + Math.PI;
                 this._angles.y = 0;
@@ -308,7 +288,8 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
                 this._dragging = true;
                 lastDragPosition.copyFrom(e.dragPlanePoint);
                 this._rotationShaderMaterial.setVector3("angles", this._angles);
-                this.angle = 0;
+                // Don't reset the angle to keep track of absolute position
+                // this.angle = 0;
             }
         });
 
@@ -319,16 +300,16 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
 
         const tmpSnapEvent = { snapDistance: 0 };
         let currentSnapDragDistance = 0;
-        const tmpMatrix = new Matrix();
-        const amountToRotate = new Quaternion();
+        const tmpMatrix = new BABYLON.Matrix();
+        const amountToRotate = new BABYLON.Quaternion();
         
         this.dragBehavior.onDragObservable.add((event) => {
             if (this.attachedNode) {
                 // Calc angle over full 360 degree
-                const nodeScale = new Vector3(1, 1, 1);
-                const nodeQuaternion = new Quaternion(0, 0, 0, 1);
-                const nodeTranslation = new Vector3(0, 0, 0);
-                const attachedNodeTransform = this._attachedNode as TransformNode;
+                const nodeScale = new BABYLON.Vector3(1, 1, 1);
+                const nodeQuaternion = new BABYLON.Quaternion(0, 0, 0, 1);
+                const nodeTranslation = new BABYLON.Vector3(0, 0, 0);
+                const attachedNodeTransform = this._attachedNode as BABYLON.TransformNode;
                 
                 // Check there is an active pivot for the TransformNode attached
                 if (attachedNodeTransform && attachedNodeTransform.isUsingPivotMatrix && attachedNodeTransform.isUsingPivotMatrix() && attachedNodeTransform.position) {
@@ -338,11 +319,11 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
 
                 this.attachedNode.getWorldMatrix().decompose(nodeScale, nodeQuaternion, nodeTranslation);
                 // Check for uniform scaling
-                const uniformScaling = Math.abs(Math.abs(nodeScale.x) - Math.abs(nodeScale.y)) <= Epsilon && 
-                                      Math.abs(Math.abs(nodeScale.x) - Math.abs(nodeScale.z)) <= Epsilon;
+                const uniformScaling = Math.abs(Math.abs(nodeScale.x) - Math.abs(nodeScale.y)) <= BABYLON.Epsilon && 
+                                      Math.abs(Math.abs(nodeScale.x) - Math.abs(nodeScale.z)) <= BABYLON.Epsilon;
                 
                 if (!uniformScaling && this.updateGizmoRotationToMatchAttachedMesh) {
-                    Logger.Warn(
+                    BABYLON.Logger.Warn(
                         "Unable to use a rotation gizmo matching mesh rotation with non uniform scaling. Use uniform scaling or set updateGizmoRotationToMatchAttachedMesh to false."
                     );
                     return;
@@ -353,8 +334,8 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
                 const nodeTranslationForOperation = this.updateGizmoPositionToMatchAttachedMesh ? nodeTranslation : this._rootMesh.absolutePosition;
                 const newVector = event.dragPlanePoint.subtract(nodeTranslationForOperation).normalize();
                 const originalVector = lastDragPosition.subtract(nodeTranslationForOperation).normalize();
-                const cross = Vector3.Cross(newVector, originalVector);
-                const dot = Vector3.Dot(newVector, originalVector);
+                const cross = BABYLON.Vector3.Cross(newVector, originalVector);
+                const dot = BABYLON.Vector3.Dot(newVector, originalVector);
                 let angle = Math.atan2(cross.length(), dot) * this.sensitivity;
                 
                 planeNormalTowardsCamera.copyFrom(planeNormal);
@@ -362,31 +343,29 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
                 
                 if (this.updateGizmoRotationToMatchAttachedMesh) {
                     nodeQuaternion.toRotationMatrix(rotationMatrix);
-                    localPlaneNormalTowardsCamera = Vector3.TransformCoordinates(planeNormalTowardsCamera, rotationMatrix);
+                    localPlaneNormalTowardsCamera = BABYLON.Vector3.TransformCoordinates(planeNormalTowardsCamera, rotationMatrix);
                 }
                 
                 // Flip up vector depending on which side the camera is on
                 let cameraFlipped = false;
                 if (gizmoLayer.utilityLayerScene.activeCamera) {
                     const camVec = gizmoLayer.utilityLayerScene.activeCamera.position.subtract(nodeTranslationForOperation).normalize();
-                    if (Vector3.Dot(camVec, localPlaneNormalTowardsCamera) > 0) {
+                    if (BABYLON.Vector3.Dot(camVec, localPlaneNormalTowardsCamera) > 0) {
                         planeNormalTowardsCamera.scaleInPlace(-1);
                         localPlaneNormalTowardsCamera.scaleInPlace(-1);
                         cameraFlipped = true;
                     }
                 }
                 
-                const halfCircleSide = Vector3.Dot(localPlaneNormalTowardsCamera, cross) > 0.0;
+                const halfCircleSide = BABYLON.Vector3.Dot(localPlaneNormalTowardsCamera, cross) > 0.0;
                 if (halfCircleSide) {
                     angle = -angle;
                 }
 
-                TmpVectors.Vector3[0].set(angle, 0, 0);
-                if (!this.dragBehavior.validateDrag(TmpVectors.Vector3[0])) {
+                BABYLON.TmpVectors.Vector3[0].set(angle, 0, 0);
+                if (!this.dragBehavior.validateDrag(BABYLON.TmpVectors.Vector3[0])) {
                     angle = 0;
-                }
-
-                // Snapping logic
+                }                // Snapping logic
                 let snapped = false;
                 if (this.snapDistance != 0) {
                     currentSnapDragDistance += angle;
@@ -403,17 +382,21 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
                     }
                 }
                 
-                // Calculate the new accumulated angle
-                const newAngle = this.angle + (cameraFlipped ? -angle : angle);
+                // Store the raw angle change before limits are applied
+                const rawAngleChange = cameraFlipped ? -angle : angle;
                 
-                // Apply joint limits if enabled
+                // Calculate the new accumulated angle
+                let newAngle = this.angle + rawAngleChange;
+                
+                // Apply joint limits if enabled - prevent exceeding limits instead of correcting after
                 if (this.enableLimits) {
+                    // Prevent exceeding limits by clamping the new angle
                     if (newAngle < this.lowerLimit) {
-                        // Adjust angle to stay at lower limit
-                        angle = this.lowerLimit - this.angle;
+                        newAngle = this.lowerLimit;
+                        angle = (newAngle - this.angle) / (cameraFlipped ? -1 : 1);
                     } else if (newAngle > this.upperLimit) {
-                        // Adjust angle to stay at upper limit
-                        angle = this.upperLimit - this.angle;
+                        newAngle = this.upperLimit;
+                        angle = (newAngle - this.angle) / (cameraFlipped ? -1 : 1);
                     }
                 }
 
@@ -428,9 +411,9 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
 
                 // If the meshes local scale is inverted, adjust rotation
                 if (tmpMatrix.determinant() > 0) {
-                    const tmpVector = new Vector3();
+                    const tmpVector = new BABYLON.Vector3();
                     amountToRotate.toEulerAnglesToRef(tmpVector);
-                    Quaternion.RotationYawPitchRollToRef(tmpVector.y, -tmpVector.x, -tmpVector.z, amountToRotate);
+                    BABYLON.Quaternion.RotationYawPitchRollToRef(tmpVector.y, -tmpVector.x, -tmpVector.z, amountToRotate);
                 }
 
                 if (this.updateGizmoRotationToMatchAttachedMesh) {
@@ -438,12 +421,12 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
                     nodeQuaternion.multiplyToRef(amountToRotate, nodeQuaternion);
                     nodeQuaternion.normalize();
                     // recompose matrix
-                    Matrix.ComposeToRef(nodeScale, nodeQuaternion, nodeTranslation, this.attachedNode.getWorldMatrix());
+                    BABYLON.Matrix.ComposeToRef(nodeScale, nodeQuaternion, nodeTranslation, this.attachedNode.getWorldMatrix());
                 } else {
                     // Rotate selected mesh quaternion over rotated axis
-                    amountToRotate.toRotationMatrix(TmpVectors.Matrix[0]);
+                    amountToRotate.toRotationMatrix(BABYLON.TmpVectors.Matrix[0]);
                     const translation = this.attachedNode.getWorldMatrix().getTranslation();
-                    this.attachedNode.getWorldMatrix().multiplyToRef(TmpVectors.Matrix[0], this.attachedNode.getWorldMatrix());
+                    this.attachedNode.getWorldMatrix().multiplyToRef(BABYLON.TmpVectors.Matrix[0], this.attachedNode.getWorldMatrix());
                     this.attachedNode.getWorldMatrix().setTranslation(translation);
                 }
 
@@ -452,14 +435,14 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
                     tmpSnapEvent.snapDistance = angle;
                     this.onSnapObservable.notifyObservers(tmpSnapEvent);
                 }
-                
-                this._angles.y += angle;
-                this.angle += cameraFlipped ? -angle : angle;
+                  this._angles.y += angle;
+                // Use the clamped newAngle to track absolute position correctly
+                this.angle = newAngle;
                 
                 // Update shader with current angles and limits
                 this._rotationShaderMaterial.setVector3("angles", this._angles);
                 this._rotationShaderMaterial.setVector2("limits", new BABYLON.Vector2(this.lowerLimit, this.upperLimit));
-                this._rotationShaderMaterial.setDefine("enableLimits", this.enableLimits);
+                this._rotationShaderMaterial.setFloat("enableLimits", this.enableLimits ? 1.0 : 0.0);
                 
                 this._matrixChanged();
             }
@@ -468,7 +451,7 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
         const light = gizmoLayer._getSharedGizmoLight();
         light.includedOnlyMeshes = light.includedOnlyMeshes.concat(this._rootMesh.getChildMeshes(false));
 
-        const cache: GizmoAxisCache = {
+        const cache: BABYLON.GizmoAxisCache = {
             colliderMeshes: [collider],
             gizmoMeshes: [rotationMesh],
             material: this._coloredMaterial,
@@ -488,7 +471,7 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
             }
             // updating the maxangle for drag behavior
             this.dragBehavior.maxDragAngle = JointRotationGizmo.MaxDragAngle;
-            this._isHovered = !!(cache.colliderMeshes.indexOf(<Mesh>pointerInfo?.pickInfo?.pickedMesh) != -1);
+            this._isHovered = !!(cache.colliderMeshes.indexOf(<BABYLON.Mesh>pointerInfo?.pickInfo?.pickedMesh) != -1);
             
             if (!this._parent) {
                 const material = cache.dragBehavior.enabled ? 
@@ -511,8 +494,8 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
      * @param tessellation
      * @returns
      */
-    protected _createGizmoMesh(parentMesh: AbstractMesh, thickness: number, tessellation: number) {
-        const collider = CreateTorus(
+    protected _createGizmoMesh(parentMesh: BABYLON.AbstractMesh, thickness: number, tessellation: number) {
+        const collider = BABYLON.CreateTorus(
             "ignore",
             {
                 diameter: 0.6,
@@ -522,7 +505,7 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
             this.gizmoLayer.utilityLayerScene
         );
         collider.visibility = 0;
-        const rotationMesh = CreateTorus(
+        const rotationMesh = BABYLON.CreateTorus(
             "",
             {
                 diameter: 0.6,
@@ -537,12 +520,12 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
         rotationMesh.rotation.x = Math.PI / 2;
         collider.rotation.x = Math.PI / 2;
 
-        parentMesh.addChild(rotationMesh, Gizmo.PreserveScaling);
-        parentMesh.addChild(collider, Gizmo.PreserveScaling);
+        parentMesh.addChild(rotationMesh, BABYLON.Gizmo.PreserveScaling);
+        parentMesh.addChild(collider, BABYLON.Gizmo.PreserveScaling);
         return { rotationMesh, collider };
     }
 
-    protected override _attachedNodeChanged(value: Nullable<Node>) {
+    protected override _attachedNodeChanged(value: BABYLON.Nullable<BABYLON.Node>) {
         if (this.dragBehavior) {
             this.dragBehavior.enabled = value ? true : false;
         }
@@ -569,7 +552,7 @@ export class JointRotationGizmo extends Gizmo implements IJointRotationGizmo {
     /**
      * Set the color used for the gizmo's rotation visualization
      */
-    public set rotationColor(color: Color3) {
+    public set rotationColor(color: BABYLON.Color3) {
         this._rotationShaderMaterial.setColor3("rotationColor", color);
     }
 
