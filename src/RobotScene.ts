@@ -5,6 +5,7 @@ import {Robot} from './Robot';
 import {Joint, JointType} from './Joint';
 import {Link} from './Link';
 import {Visual} from './Visual';
+import { JointRotationGizmo } from './JointRotationGizmo';
 
 import * as GUI from 'babylonjs-gui';
 import * as ColladaFileLoader from '@polyhobbyist/babylon-collada-loader';
@@ -33,7 +34,8 @@ export class RobotScene {
   private selectedVisual : Visual | undefined = undefined;
   private hoveredJoint : Joint | undefined = undefined;
   private utilLayer : BABYLON.UtilityLayerRenderer | undefined = undefined;
-  private jointGizmo: BABYLON.Gizmo | undefined;
+  private planeRotationGizmo: JointRotationGizmo | undefined = undefined;
+  private jointGizmo: BABYLON.Gizmo | undefined = undefined;
       
 
   clearStatus() {
@@ -194,92 +196,44 @@ export class RobotScene {
     switch (joint.type) {
       case JointType.Revolute:
       case JointType.Continuous:
-        // For revolute and continuous joints, create a rotation gizmo that aligns with the joint axis
-        const rotationGizmo = new BABYLON.RotationGizmo(layer);
-        rotationGizmo.scaleRatio = .75; // Much larger for better visibility
-        rotationGizmo.attachedNode = joint.transform;
-
-        // Disable all axes except the one that aligns with the joint's rotation axis
-        // This doesn't work - bug?
-        //rotationGizmo.xGizmo.isEnabled = Math.abs(joint.axis.x) > 0.5;
-        //rotatonGizmo.yGizmo.isEnabled = Math.abs(joint.axis.y) > 0.5;
-        //rotationGizmo.zGizmo.isEnabled = Math.abs(joint.axis.z) > 0.5;
-        let activeGizmo : BABYLON.IPlaneRotationGizmo | undefined;
-        let axisKey = "";
-
-        if (Math.abs(joint.axis.x) < 0.5) {
-          rotationGizmo.xGizmo.isEnabled = false;
-        } else {
-          activeGizmo = rotationGizmo.xGizmo;
-          console.log(`Joint ${joint.name} is primarily rotating around x-axis`);
-          axisKey = "x";
-        }
-
-        if (Math.abs(joint.axis.y) < 0.5) {
-          rotationGizmo.yGizmo.isEnabled = false;
-        } else {
-          activeGizmo = rotationGizmo.yGizmo;
+        if (Math.abs(joint.axis.y) > 0.5) {
           console.log(`Joint ${joint.name} is primarily rotating around y-axis`);
-          axisKey = "y";
-        }
-
-        if (Math.abs(joint.axis.z) < 0.5) {
-          rotationGizmo.zGizmo.isEnabled = false;
-        } else {
-          activeGizmo = rotationGizmo.zGizmo;
+          // Create a rotation gizmo for the XZ plane (rotating around Y axis)
+          this.planeRotationGizmo = new JointRotationGizmo(
+            new BABYLON.Vector3(0, 1, 0), // Y axis
+            BABYLON.Color3.Green(),
+            layer
+          );
+        } else if (Math.abs(joint.axis.z) > 0.5) {
           console.log(`Joint ${joint.name} is primarily rotating around z-axis`);
-          axisKey = "z";
-        }
-
-        // Make sure at least one axis is enabled if the joint axis values are too small
-        if (!rotationGizmo.xGizmo.isEnabled && !rotationGizmo.yGizmo.isEnabled && !rotationGizmo.zGizmo.isEnabled) {
-          console.log(`Joint ${joint.name} has no dominant axis, defaulting to x-axis`);
-          rotationGizmo.xGizmo.isEnabled = true;
-        }
-
-        if (activeGizmo && activeGizmo.dragBehavior) {
-          // Store initial rotation to track relative changes
-          let startRotation = Number(joint.transform.rotation[axisKey as keyof BABYLON.Vector3]);
-          let currentRotation = Number(startRotation);
-
-          activeGizmo.dragBehavior.onDragObservable.add((evt: any) => {
-            if (!joint.transform) return;
-
-            // Calculate how much rotation changed in this drag event
-            const newRotation = Number(joint.transform.rotation[axisKey as keyof BABYLON.Vector3]);
-            const delta = evt.delta[axisKey as keyof BABYLON.Vector3];
-
-            console.log(`Joint ${joint.name} new rotation: ${newRotation}, delta: ${delta}`);
-
-            // Update the accumulated rotation
-            currentRotation += delta;
-
-            // For revolute joints, apply limits
-            if (joint.type === JointType.Revolute) {
-              const relativeToStart = currentRotation - startRotation;
-              let correction : number = 0;
-
-              console.log(`Joint ${joint.name} rotation: ${relativeToStart}`);
-              
-              // Clamp the rotation within the limits
-              const clampedRotation = Math.max(joint.lowerLimit, Math.min(joint.upperLimit, newRotation));
-              correction = clampedRotation - relativeToStart;
-
-              console.log(`Joint ${joint.name} clamped rotation: ${clampedRotation}`);
-              const updatedRotation = new BABYLON.Vector3(
-                axisKey === "x" ? joint.transform.rotation.x + correction : joint.transform.rotation.x,
-                axisKey === "y" ? joint.transform.rotation.y + correction : joint.transform.rotation.y,
-                axisKey === "z" ? joint.transform.rotation.z + correction : joint.transform.rotation.z
-              );
-              joint.transform.rotation = updatedRotation;
-              currentRotation += correction;
-            }
-
-            this.updateJointStatusLabel(joint);
-          });
+          // Create a rotation gizmo for the XY plane (rotating around Z axis)
+          this.planeRotationGizmo = new JointRotationGizmo(
+            new BABYLON.Vector3(0, 0, 1), // Z axis
+            BABYLON.Color3.Blue(),
+            layer
+          );
+        } else {
+          console.log(`Joint ${joint.name} rotating around x-axis`);
+          this.planeRotationGizmo = new JointRotationGizmo(
+            new BABYLON.Vector3(1, 0, 0), // X axis
+            BABYLON.Color3.Red(),
+            layer
+          );
         }
         
-        this.jointGizmo = rotationGizmo;
+        // Configure the rotation gizmo
+        this.planeRotationGizmo.scaleRatio = 0.75; // Much larger for better visibility
+        this.planeRotationGizmo.attachedNode = joint.transform;
+        this.planeRotationGizmo.lowerLimit = joint.lowerLimit;
+        this.planeRotationGizmo.upperLimit = joint.upperLimit;
+        this.planeRotationGizmo.enableLimits = true;
+        
+        this.planeRotationGizmo.dragBehavior.onDragObservable.add(() => {
+          if (joint.transform) {
+            this.updateJointStatusLabel(joint);
+          }
+        });
+        
         break;
         
       case JointType.Prismatic:
