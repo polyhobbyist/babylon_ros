@@ -155,13 +155,13 @@ export class JointPositionGizmo extends BABYLON.Gizmo {
 
         // Build Mesh + Collider
         const arrow = JointPositionGizmo._CreateArrow(gizmoLayer.utilityLayerScene, this._coloredMaterial, thickness);
-        const collider = JointPositionGizmo._CreateArrow(gizmoLayer.utilityLayerScene, this._coloredMaterial, thickness * 4, true);        // Add to Root Node
+        const collider = JointPositionGizmo._CreateArrow(gizmoLayer.utilityLayerScene, this._coloredMaterial, thickness * 8, true);        // Add to Root Node
         this._gizmoMesh = new BABYLON.Mesh("", gizmoLayer.utilityLayerScene);
         this._gizmoMesh.addChild(arrow as BABYLON.Mesh);
         this._gizmoMesh.addChild(collider as BABYLON.Mesh);
 
         this._gizmoMesh.lookAt(this._rootMesh.position.add(this.associatedJoint?.axis || BABYLON.Vector3.Zero()));
-        this._gizmoMesh.scaling.scaleInPlace(1 / 3);
+        //this._gizmoMesh.scaling.scaleInPlace(1 / 3);
         this._gizmoMesh.parent = this._rootMesh;
 
         // Add drag behavior to handle events when the gizmo is dragged
@@ -177,7 +177,6 @@ export class JointPositionGizmo extends BABYLON.Gizmo {
                 // will be recomputed in _matrixChanged function
 
                 let matrixChanged: boolean = false;
-
                 // Check if limits are enabled and enforce them
                 if (this.associatedJoint && 
                     (this.associatedJoint.lowerLimit !== 0 || this.associatedJoint.upperLimit !== 0)) {
@@ -187,11 +186,11 @@ export class JointPositionGizmo extends BABYLON.Gizmo {
                     
                     // Calculate the movement along the drag axis
                     const movement = event.delta.length();
+                    let delta = event.delta.clone();
                     
                     // Apply limits based on the drag direction
-                    const direction = Math.sign(BABYLON.Vector3.Dot(event.delta.normalize(), this.associatedJoint.axis));
+                    const direction = Math.sign(BABYLON.Vector3.Dot(delta.normalize(), this.associatedJoint.axis));
                     const projectedMovement = movement * direction;
-                    
                     // Check if the movement exceeds limits
                     if ((projectedMovement < this.associatedJoint.lowerLimit) || (projectedMovement > this.associatedJoint.upperLimit)) {
                         // Clamp the movement to the limits
@@ -199,9 +198,11 @@ export class JointPositionGizmo extends BABYLON.Gizmo {
                         
                         // Recalculate the delta based on the clamped movement
                         event.delta.normalize().scaleInPlace(clampedMovement);
+
+                        console.log(`Clamped movement: ${clampedMovement}, Original position: ${originalPos}, New position: ${BABYLON.TmpVectors.Vector3[2]}`);
                     }
                 }
-
+                
                 this.attachedNode.getWorldMatrix().getTranslationToRef(BABYLON.TmpVectors.Vector3[2]);
                 BABYLON.TmpVectors.Vector3[2].addInPlace(event.delta);
                 if (this.dragBehavior.validateDrag(BABYLON.TmpVectors.Vector3[2])) {
