@@ -169,37 +169,54 @@ export class JointPositionGizmo extends BABYLON.Gizmo {
         this.dragBehavior.moveAttached = false;
         this.dragBehavior.updateDragPlane = false;
         this._rootMesh.addBehavior(this.dragBehavior);        
-        
-        this.dragBehavior.onDragObservable.add((event) => {
+          this.dragBehavior.onDragObservable.add((event) => {
             if (this.attachedNode) {
                 // Keep world translation and use it to update world transform
                 // if the node has parent, the local transform properties (position, rotation, scale)
                 // will be recomputed in _matrixChanged function
-
+                
                 let matrixChanged: boolean = false;
                 // Check if limits are enabled and enforce them
                 if (this.associatedJoint && 
                     (this.associatedJoint.lowerLimit !== 0 || this.associatedJoint.upperLimit !== 0)) {
-                    // Store the original position for comparison
-                    const originalPos = BABYLON.TmpVectors.Vector3[3];
-                    this.attachedNode.getWorldMatrix().getTranslationToRef(originalPos);
+                    // Get the joint's origin as the reference point
+                    const jointOrigin = this.associatedJoint.origin.clone();
                     
-                    // Calculate the movement along the drag axis
-                    const movement = event.delta.length();
-                    let delta = event.delta.clone();
+                    // Get current position of the attached node
+                    const currentPos = BABYLON.TmpVectors.Vector3[3];
+                    this.attachedNode.getWorldMatrix().getTranslationToRef(currentPos);
                     
-                    // Apply limits based on the drag direction
-                    const direction = Math.sign(BABYLON.Vector3.Dot(delta.normalize(), this.associatedJoint.axis));
-                    const projectedMovement = movement * direction;
-                    // Check if the movement exceeds limits
-                    if ((projectedMovement < this.associatedJoint.lowerLimit) || (projectedMovement > this.associatedJoint.upperLimit)) {
-                        // Clamp the movement to the limits
-                        const clampedMovement = BABYLON.Scalar.Clamp(projectedMovement, this.associatedJoint.lowerLimit, this.associatedJoint.upperLimit);
-                        
-                        // Recalculate the delta based on the clamped movement
-                        event.delta.normalize().scaleInPlace(clampedMovement);
-
-                        console.log(`Clamped movement: ${clampedMovement}, Original position: ${originalPos}, New position: ${BABYLON.TmpVectors.Vector3[2]}`);
+                    // Calculate current displacement vector from joint origin to current position
+                    const currentDisplacementVector = currentPos.subtract(jointOrigin);
+                    
+                    // Project the current displacement onto the joint axis to get scalar position along axis
+                    const jointAxis = this.associatedJoint.axis.normalize();
+                    const currentPosOnAxis = BABYLON.Vector3.Dot(currentDisplacementVector, jointAxis);
+                      // Project the movement delta onto the joint axis
+                    const deltaOnAxis = BABYLON.Vector3.Dot(event.delta, jointAxis);
+                    
+                    // Store the original delta for reference
+                    const originalDelta = event.delta.clone();
+                    
+                    // Calculate new position along axis after applying delta
+                    const newPosOnAxis = currentPosOnAxis + deltaOnAxis;
+                    
+                    console.log(`Current position along axis: ${currentPosOnAxis.toFixed(3)}`);
+                    console.log(`Delta along axis: ${deltaOnAxis.toFixed(3)}`);
+                    console.log(`New position along axis: ${newPosOnAxis.toFixed(3)}`);
+                    console.log(`Limits: [${this.associatedJoint.lowerLimit.toFixed(3)}, ${this.associatedJoint.upperLimit.toFixed(3)}]`);
+                    
+                    if (newPosOnAxis < this.associatedJoint.lowerLimit) {
+                        console.log(`Movement aborted: would exceed lower limit (${this.associatedJoint.lowerLimit.toFixed(3)})`);
+                        event.delta.scaleInPlace(0); // Cancel the movement completely
+                        return; // Exit early
+                    } else if (newPosOnAxis > this.associatedJoint.upperLimit) {
+                        console.log(`Movement aborted: would exceed upper limit (${this.associatedJoint.upperLimit.toFixed(3)})`);
+                        event.delta.scaleInPlace(0); // Cancel the movement completely
+                        return; // Exit early
+                    } else {
+                        // If we get here, the movement is within limits, so we allow it to proceed normally
+                        console.log(`Movement within limits: ${newPosOnAxis.toFixed(3)} is between [${this.associatedJoint.lowerLimit.toFixed(3)}, ${this.associatedJoint.upperLimit.toFixed(3)}]`);
                     }
                 }
                 
