@@ -236,11 +236,6 @@ export class RobotScene {
         break;
         
       case JointType.Prismatic:
-        // For prismatic joints, create a position gizmo limited to one axis
-
-        break;
-
-      case JointType.Planar:
         // For planar joints, create a position gizmo limited to two axes
         this.planePositionGizmo = undefined;
         if (Math.abs(joint.axis.y) > 0.5) {
@@ -267,11 +262,13 @@ export class RobotScene {
         }
         break;
 
+        case JointType.Planar:
+          console.log(`Joint ${joint.name} is using a planar joint, which is not yet supported for exercise gizmos. If you would like to see this, please open an issue on the GitHub repository.`);
+          break;
+
         case JointType.Floating:
-          // A floating joint is a combination of prismatic and revolute joints
-          // Create a RotationGizmo for each axis and a PositionGizmo for each axis
-        
-        break;
+          console.log(`Joint ${joint.name} is using a floating joint, which is not yet supported for exercise gizmos. If you would like to see this, please open an issue on the GitHub repository.`);
+          break;
     }
   }
   

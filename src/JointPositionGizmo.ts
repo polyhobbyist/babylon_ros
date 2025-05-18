@@ -187,7 +187,7 @@ export class JointPositionGizmo extends BABYLON.Gizmo {
                     this.attachedNode.getWorldMatrix().getTranslationToRef(currentPos);
                     
                     // Calculate current displacement vector from joint origin to current position
-                    const currentDisplacementVector = currentPos.subtract(jointOrigin);
+                    const currentDisplacementVector = jointOrigin.subtract(currentPos);
                     
                     // Project the current displacement onto the joint axis to get scalar position along axis
                     const jointAxis = this.associatedJoint.axis.normalize();
@@ -207,13 +207,25 @@ export class JointPositionGizmo extends BABYLON.Gizmo {
                     console.log(`Limits: [${this.associatedJoint.lowerLimit.toFixed(3)}, ${this.associatedJoint.upperLimit.toFixed(3)}]`);
                     
                     if (newPosOnAxis < this.associatedJoint.lowerLimit) {
-                        console.log(`Movement aborted: would exceed lower limit (${this.associatedJoint.lowerLimit.toFixed(3)})`);
-                        event.delta.scaleInPlace(0); // Cancel the movement completely
-                        return; // Exit early
+                        // If moving away from the lower limit (positive delta), allow the movement
+                        if (deltaOnAxis > 0 && currentPosOnAxis <= this.associatedJoint.lowerLimit) {
+                            console.log(`Allowing movement away from lower limit`);
+                            // We allow the movement to proceed
+                        } else {
+                            // We're trying to move further beyond the lower limit
+                            console.log(`Movement aborted: would exceed lower limit (${this.associatedJoint.lowerLimit.toFixed(3)})`);
+                            event.delta.scaleInPlace(0); // Cancel the movement completely
+                            return; // Exit early
+                        }
                     } else if (newPosOnAxis > this.associatedJoint.upperLimit) {
-                        console.log(`Movement aborted: would exceed upper limit (${this.associatedJoint.upperLimit.toFixed(3)})`);
-                        event.delta.scaleInPlace(0); // Cancel the movement completely
-                        return; // Exit early
+                        // If moving away from the lower limit (positive delta), allow the movement
+                        if (deltaOnAxis < 0 && currentPosOnAxis >= this.associatedJoint.upperLimit) {
+                            console.log(`Allowing movement away from upper limit`);
+                        } else {
+                            console.log(`Movement aborted: would exceed upper limit (${this.associatedJoint.upperLimit.toFixed(3)})`);
+                            event.delta.scaleInPlace(0); // Cancel the movement completely
+                            return; // Exit early
+                        }
                     } else {
                         // If we get here, the movement is within limits, so we allow it to proceed normally
                         console.log(`Movement within limits: ${newPosOnAxis.toFixed(3)} is between [${this.associatedJoint.lowerLimit.toFixed(3)}, ${this.associatedJoint.upperLimit.toFixed(3)}]`);

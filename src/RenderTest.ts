@@ -77,7 +77,7 @@ function addTestToRobotScene(robotScene : RobotScene) {
   <link name="base_link">
     <visual>
       <geometry>
-        <box size="0.5 0.5 0.1"/>
+        <box size="0.25 0.25 0.1"/>
       </geometry>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <material name="blue">
@@ -119,13 +119,13 @@ function addTestToRobotScene(robotScene : RobotScene) {
     </inertial>
   </link>
 
-  <!-- Planar Joint -->
-  <joint name="planar_joint" type="planar">
+  <!-- Prismatic Joint -->
+  <joint name="prismatic_joint" type="prismatic">
     <parent link="base_link"/>
     <child link="moving_link"/>
     <origin xyz="0 0 0.05" rpy="0 0 0"/>
-    <axis xyz="0 0 1"/> <!-- Rotation around z-axis -->
-    <limit effort="1000" velocity="1.0" lower="-0.5" upper="0.5"/> <!-- Limits for translation -->
+    <axis xyz="0 0 1"/>
+    <limit effort="1000" velocity="1.0" lower="-0.25" upper="0.25"/> <!-- Limits for translation -->
   </joint>
 
 </robot>
