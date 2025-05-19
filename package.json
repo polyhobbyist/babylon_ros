@@ -5,7 +5,7 @@
     "url": "https://github.com/polyhobbyist/babylon_ros.git"
   },
   "description": "Babylon.JS abstractions for ROS 2",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "dist/ros.js",
   "types": "types/src/ros.d.ts",
   "exports": {

@@ -22,46 +22,9 @@
 
 import * as BABYLON from 'babylonjs';
 
-/**
- * Interface for joint rotation gizmo
- */
-export interface IJointRotationGizmo extends BABYLON.IGizmo {
-    /** Drag behavior responsible for the gizmos dragging interactions */
-    dragBehavior: BABYLON.PointerDragBehavior;
-    /** Drag distance in babylon units that the gizmo will snap to when dragged */
-    snapDistance: number;
-    /** Sensitivity factor for dragging */
-    sensitivity: number;
-    /** Lower rotation limit in radians */
-    lowerLimit: number;
-    /** Upper rotation limit in radians */
-    upperLimit: number;
-    /** Whether to enforce rotation limits */
-    enableLimits: boolean;
-    /**
-     * Event that fires each time the gizmo snaps to a new location.
-     * * snapDistance is the change in distance
-     */
-    onSnapObservable: BABYLON.Observable<{ snapDistance: number }>;
-    /** Accumulated relative angle value for rotation on the axis. */
-    angle: number;
-    /** If the gizmo is enabled */
-    isEnabled: boolean;
+import { Joint } from './Joint';
 
-    /** Default material used to render when gizmo is not disabled or hovered */
-    coloredMaterial: BABYLON.StandardMaterial;
-    /** Material used to render when gizmo is hovered with mouse */
-    hoverMaterial: BABYLON.StandardMaterial;
-    /** Color used to render the drag angle sector when gizmo is rotated with mouse */
-    rotationColor: BABYLON.Color3;
-    /** Material used to render when gizmo is disabled. typically grey. */
-    disableMaterial: BABYLON.StandardMaterial;
-}
-
-/**
- * Joint rotation gizmo
- */
-export class JointRotationGizmo extends BABYLON.Gizmo implements IJointRotationGizmo {
+export class JointRotationGizmo extends BABYLON.Gizmo {
     /**
      * Drag behavior responsible for the gizmos dragging interactions
      */
@@ -93,21 +56,13 @@ export class JointRotationGizmo extends BABYLON.Gizmo implements IJointRotationG
      * Custom sensitivity value for the drag strength
      */
     public sensitivity = 1;
-    
-    /**
-     * Lower rotation limit in radians
-     */
-    public lowerLimit: number = -Math.PI;
-    
-    /**
-     * Upper rotation limit in radians
-     */
-    public upperLimit: number = Math.PI;
-    
+        
     /**
      * Whether to enforce rotation limits
      */
     public enableLimits: boolean = true;
+
+    public associatedJoint: Joint | undefined = undefined;
 
     protected _isEnabled: boolean = true;
     protected _parent: BABYLON.Nullable<any> = null; // Using any instead of RotationGizmo as we don't need full type
@@ -182,7 +137,6 @@ export class JointRotationGizmo extends BABYLON.Gizmo implements IJointRotationG
 
     /**
      * Creates a JointRotationGizmo
-     * @param planeNormal The normal of the plane which the gizmo will be able to rotate on
      * @param color The color of the gizmo
      * @param gizmoLayer The utility layer the gizmo will be added to
      * @param tessellation Amount of tessellation to be used when creating rotation circles
@@ -191,15 +145,11 @@ export class JointRotationGizmo extends BABYLON.Gizmo implements IJointRotationG
      * @param thickness display gizmo axis thickness
      * @param hoverColor The color of the gizmo when hovering over and dragging
      * @param disableColor The Color of the gizmo when its disabled
-     * @param lowerLimit Lower joint rotation limit in radians
-     * @param upperLimit Upper joint rotation limit in radians
      */
     constructor(
-        planeNormal: BABYLON.Vector3,
+        associatedJoint: Joint | undefined,
         color: BABYLON.Color3 = BABYLON.Color3.Gray(),
         gizmoLayer: BABYLON.UtilityLayerRenderer = BABYLON.UtilityLayerRenderer.DefaultUtilityLayer,
-        lowerLimit: number = -Math.PI,
-        upperLimit: number = Math.PI,
         enableLimits: boolean = true,
         tessellation = 32,
         parent: BABYLON.Nullable<any> = null,
@@ -209,11 +159,8 @@ export class JointRotationGizmo extends BABYLON.Gizmo implements IJointRotationG
     ) {
         super(gizmoLayer);
         this._parent = parent;
+        this.associatedJoint = associatedJoint;
         
-        // Set rotation limits
-        this.lowerLimit = lowerLimit;
-        this.upperLimit = upperLimit;
-
         this.enableLimits = enableLimits;
 
         // Create Material
@@ -271,19 +218,19 @@ export class JointRotationGizmo extends BABYLON.Gizmo implements IJointRotationG
         this.rotationColor = hoverColor;
         
         // Set initial limit values in the shader
-        this._rotationShaderMaterial.setVector2("limits", new BABYLON.Vector2(this.lowerLimit, this.upperLimit));
+        this._rotationShaderMaterial.setVector2("limits", new BABYLON.Vector2(this.associatedJoint?.lowerLimit, this.associatedJoint?.upperLimit));
         // Use setFloat to pass boolean value (1.0 for true, 0.0 for false)
         this._rotationShaderMaterial.setFloat("enableLimits", this.enableLimits ? 1.0 : 0.0);
 
         this._rotationDisplayPlane.material = this._rotationShaderMaterial;
         this._rotationDisplayPlane.visibility = 0.999;
 
-        this._gizmoMesh.lookAt(this._rootMesh.position.add(planeNormal));
+        this._gizmoMesh.lookAt(this._rootMesh.position.add(associatedJoint?.axis || BABYLON.Vector3.Zero()));
         this._rootMesh.addChild(this._gizmoMesh, BABYLON.Gizmo.PreserveScaling);
         this._gizmoMesh.scaling.scaleInPlace(1 / 3);
         
         // Add drag behavior to handle events when the gizmo is dragged
-        this.dragBehavior = new BABYLON.PointerDragBehavior({ dragPlaneNormal: planeNormal });
+        this.dragBehavior = new BABYLON.PointerDragBehavior({ dragPlaneNormal: associatedJoint?.axis || BABYLON.Vector3.Zero() });
         this.dragBehavior.moveAttached = false;
         this.dragBehavior.maxDragAngle = JointRotationGizmo.MaxDragAngle;
         this.dragBehavior._useAlternatePickedPointAboveMaxDragAngle = true;
@@ -360,8 +307,8 @@ export class JointRotationGizmo extends BABYLON.Gizmo implements IJointRotationG
                 const dot = BABYLON.Vector3.Dot(newVector, originalVector);
                 let angle = Math.atan2(cross.length(), dot) * this.sensitivity;
                 
-                planeNormalTowardsCamera.copyFrom(planeNormal);
-                localPlaneNormalTowardsCamera.copyFrom(planeNormal);
+                planeNormalTowardsCamera.copyFrom(associatedJoint?.axis || BABYLON.Vector3.Zero());
+                localPlaneNormalTowardsCamera.copyFrom(associatedJoint?.axis || BABYLON.Vector3.Zero());
                 
                 if (this.updateGizmoRotationToMatchAttachedMesh) {
                     nodeQuaternion.toRotationMatrix(rotationMatrix);
@@ -411,13 +358,13 @@ export class JointRotationGizmo extends BABYLON.Gizmo implements IJointRotationG
                 let newAngle = this.angle + rawAngleChange;
                 
                 // Apply joint limits if enabled - prevent exceeding limits instead of correcting after
-                if (this.enableLimits) {
+                if (this.enableLimits && this.associatedJoint) {
                     // Prevent exceeding limits by clamping the new angle
-                    if (newAngle < this.lowerLimit) {
-                        newAngle = this.lowerLimit;
+                    if (newAngle < this.associatedJoint.lowerLimit) {
+                        newAngle = this.associatedJoint.lowerLimit;
                         angle = (newAngle - this.angle) / (cameraFlipped ? -1 : 1);
-                    } else if (newAngle > this.upperLimit) {
-                        newAngle = this.upperLimit;
+                    } else if (newAngle > this.associatedJoint.upperLimit) {
+                        newAngle = this.associatedJoint.upperLimit;
                         angle = (newAngle - this.angle) / (cameraFlipped ? -1 : 1);
                     }
                 }
@@ -463,7 +410,7 @@ export class JointRotationGizmo extends BABYLON.Gizmo implements IJointRotationG
                 
                 // Update shader with current angles and limits
                 this._rotationShaderMaterial.setVector3("angles", this._angles);
-                this._rotationShaderMaterial.setVector2("limits", new BABYLON.Vector2(this.lowerLimit, this.upperLimit));
+                this._rotationShaderMaterial.setVector2("limits", new BABYLON.Vector2(this.associatedJoint?.lowerLimit, this.associatedJoint?.upperLimit));
                 this._rotationShaderMaterial.setFloat("enableLimits", this.enableLimits ? 1.0 : 0.0);
                 
                 this._matrixChanged();
@@ -591,21 +538,6 @@ export class JointRotationGizmo extends BABYLON.Gizmo implements IJointRotationG
     /** Material used to render when gizmo is disabled. typically grey. */
     public get disableMaterial() {
         return this._disableMaterial;
-    }
-
-    /**
-     * Sets the gizmo's joint limits and updates the visualization
-     * @param lowerLimit Lower rotation limit in radians
-     * @param upperLimit Upper rotation limit in radians
-     */
-    public setLimits(lowerLimit: number, upperLimit: number): void {
-        this.lowerLimit = lowerLimit;
-        this.upperLimit = upperLimit;
-        
-        // Update shader with new limits
-        if (this._rotationShaderMaterial) {
-            this._rotationShaderMaterial.setVector2("limits", new BABYLON.Vector2(this.lowerLimit, this.upperLimit));
-        }
     }
 
     /**

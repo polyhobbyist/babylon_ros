@@ -6,6 +6,7 @@ import {Joint, JointType} from './Joint';
 import {Link} from './Link';
 import {Visual} from './Visual';
 import { JointRotationGizmo } from './JointRotationGizmo';
+import { JointPositionGizmo } from './JointPositionGizmo';
 
 import * as GUI from 'babylonjs-gui';
 import * as ColladaFileLoader from '@polyhobbyist/babylon-collada-loader';
@@ -33,8 +34,9 @@ export class RobotScene {
   private selectedVisual : Visual | undefined = undefined;
   private hoveredJoint : Joint | undefined = undefined;
   private utilLayer : BABYLON.UtilityLayerRenderer | undefined = undefined;
+  private gizmoLayer : BABYLON.UtilityLayerRenderer | undefined = undefined;
   private planeRotationGizmo: JointRotationGizmo | undefined = undefined;
-  private jointGizmo: BABYLON.Gizmo | undefined = undefined;
+  private planePositionGizmo: JointPositionGizmo | undefined = undefined;
       
 
   clearStatus() {
@@ -175,8 +177,8 @@ export class RobotScene {
   clearJointExerciseGizmos() {
     this.planeRotationGizmo?.dispose();
     this.planeRotationGizmo = undefined;
-    this.jointGizmo?.dispose();
-    this.jointGizmo = undefined;
+    this.planePositionGizmo?.dispose();
+    this.planePositionGizmo = undefined;
   }
 
   addExerciseGizmoToJoint(joint: Joint, scene: BABYLON.Scene, layer: BABYLON.UtilityLayerRenderer) {
@@ -193,43 +195,37 @@ export class RobotScene {
     }
     
     switch (joint.type) {
-      case JointType.Revolute:
       case JointType.Continuous:
+      case JointType.Revolute:
         if (Math.abs(joint.axis.y) > 0.5) {
           console.log(`Joint ${joint.name} is primarily rotating around y-axis`);
           // Create a rotation gizmo for the XZ plane (rotating around Y axis)
           this.planeRotationGizmo = new JointRotationGizmo(
-            new BABYLON.Vector3(0, 1, 0), // Y axis
+            joint,
             BABYLON.Color3.Green(),
-            layer,
-            joint.lowerLimit,
-            joint.upperLimit
+            layer
           );
         } else if (Math.abs(joint.axis.z) > 0.5) {
           console.log(`Joint ${joint.name} is primarily rotating around z-axis`);
           // Create a rotation gizmo for the XY plane (rotating around Z axis)
           this.planeRotationGizmo = new JointRotationGizmo(
-            new BABYLON.Vector3(0, 0, 1), // Z axis
+            joint,
             BABYLON.Color3.Blue(),
-            layer,
-            joint.lowerLimit,
-            joint.upperLimit
+            layer
           );
         } else {
           console.log(`Joint ${joint.name} rotating around x-axis`);
           this.planeRotationGizmo = new JointRotationGizmo(
-            new BABYLON.Vector3(1, 0, 0), // X axis
+            joint,
             BABYLON.Color3.Red(),
-            layer,
-            joint.lowerLimit,
-            joint.upperLimit
+            layer
           );
         }
         
         // Configure the rotation gizmo
         this.planeRotationGizmo.scaleRatio = 0.75; // Much larger for better visibility
         this.planeRotationGizmo.attachedNode = joint.transform;
-        this.planeRotationGizmo.enableLimits = true;
+        this.planeRotationGizmo.enableLimits = joint.type !== JointType.Continuous;
         
         this.planeRotationGizmo.dragBehavior.onDragObservable.add(() => {
           if (joint.transform) {
@@ -240,36 +236,39 @@ export class RobotScene {
         break;
         
       case JointType.Prismatic:
-        // For prismatic joints, create a position gizmo limited to one axis
-        const positionGizmo = new BABYLON.PositionGizmo(layer);
-        positionGizmo.scaleRatio = .5;
-        positionGizmo.attachedNode = joint.transform;
-        
-        // Enable only the axis that aligns with the joint's translation axis
-        if (Math.abs(joint.axis.x) < 0.5) {
-          positionGizmo.xGizmo.isEnabled = false;
+        // For planar joints, create a position gizmo limited to two axes
+        this.planePositionGizmo = undefined;
+        if (Math.abs(joint.axis.y) > 0.5) {
+          this.planePositionGizmo = new JointPositionGizmo(
+            joint,
+            BABYLON.Color3.Blue(),
+            layer);
+        } else if (Math.abs(joint.axis.z) > 0.5) {
+          this.planePositionGizmo = new JointPositionGizmo(
+            joint,
+            BABYLON.Color3.Red(),
+            layer);
+        } else {
+          this.planePositionGizmo = new JointPositionGizmo(
+            joint,
+            BABYLON.Color3.Green(),
+            layer);
         }
 
-        if (Math.abs(joint.axis.y) < 0.5) {
-          positionGizmo.yGizmo.isEnabled = false;
+        if (this.planePositionGizmo)
+        {
+          this.planePositionGizmo.scaleRatio = .75;
+          this.planePositionGizmo.attachedNode = joint.transform;
         }
+        break;
 
-        if (Math.abs(joint.axis.z) < 0.5) {
-          positionGizmo.zGizmo.isEnabled = false;
-        }
-        
-        this.jointGizmo = positionGizmo;
-        break;
-        
-      case JointType.Planar:
-      case JointType.Floating:
-        // For planar and floating joints, simplified implementation
-        const floatingGizmo = new BABYLON.PositionGizmo(layer);
-        floatingGizmo.scaleRatio = .5;
-        floatingGizmo.attachedNode = joint.transform;
-        
-        this.jointGizmo = floatingGizmo;
-        break;
+        case JointType.Planar:
+          console.log(`Joint ${joint.name} is using a planar joint, which is not yet supported for exercise gizmos. If you would like to see this, please open an issue on the GitHub repository.`);
+          break;
+
+        case JointType.Floating:
+          console.log(`Joint ${joint.name} is using a floating joint, which is not yet supported for exercise gizmos. If you would like to see this, please open an issue on the GitHub repository.`);
+          break;
     }
   }
   
@@ -283,7 +282,7 @@ export class RobotScene {
       rotationText = "\nRotation: " + joint.transform.rotation.x.toFixed(3) + "," +
               joint.transform.rotation.y.toFixed(3) + "," +
               joint.transform.rotation.z.toFixed(3);
-      if (!isNaN(joint.lowerLimit) && !isNaN(joint.upperLimit)) {
+      if (!isNaN(joint.lowerLimit) && !isNaN(joint.upperLimit) && joint.lowerLimit !== joint.upperLimit && joint.type !== JointType.Continuous) {
         limitsText = "\nLimits: " + joint.lowerLimit.toFixed(2) + " to " + joint.upperLimit.toFixed(2);
       }
     }
@@ -471,7 +470,7 @@ export class RobotScene {
   
     // Create a utility layer with specific settings to ensure gizmo visibility
     this.utilLayer = new BABYLON.UtilityLayerRenderer(this.scene);
-    this.utilLayer.utilityLayerScene.autoClearDepthAndStencil = false; // Helps with depth sorting
+    //this.utilLayer.utilityLayerScene.autoClearDepthAndStencil = false; // Helps with depth sorting
     this.utilLayer.shouldRender = true; // Ensure the layer renders
     this.utilLayer.onlyCheckPointerDownEvents = false; // Respond to all pointer events
   

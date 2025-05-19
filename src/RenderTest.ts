@@ -35,6 +35,8 @@ function addTestToRobotScene(robotScene : RobotScene) {
     {name: "Basic", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic.urdf"},
     {name: "Basic Joint", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_joint.urdf"},
     {name: "Basic Revolute Joint", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_joint_with_effort.urdf"},
+    {name: "Planar Joint", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_joint_planar.urdf"},
+    {name: "Prismatic Joint", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_joint_prismatic.urdf"},
     {name: "Basic Material", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_material.urdf"},
     {name: "Basic Remote Mesh", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_remote_mesh.urdf"},
     {name: "Basic with STL", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_stl_mesh.urdf"},
@@ -69,29 +71,61 @@ function addTestToRobotScene(robotScene : RobotScene) {
     robotTestGroup.addRadio(t.name, async () => {
       if (t.name === "inline") {
         const inlineURDF = `<?xml version="1.0"?>
-<robot name="origins">
+<robot name="planar_joint_example">
+
+  <!-- Base Link -->
   <link name="base_link">
     <visual>
       <geometry>
-        <cylinder length="0.6" radius="0.2"/>
+        <box size="0.25 0.25 0.1"/>
       </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="blue">
+        <color rgba="0 0 1 1"/>
+      </material>
     </visual>
+    <collision>
+      <geometry>
+        <box size="0.5 0.5 0.1"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+    </inertial>
   </link>
 
-  <link name="right_leg">
+  <!-- Moving Link -->
+  <link name="moving_link">
     <visual>
       <geometry>
-        <box size="0.6 0.1 0.2"/>
+        <cylinder radius="0.05" length="0.2"/>
       </geometry>
-      <origin rpy="0 1.57075 0" xyz="0 0 -0.3"/>
+      <origin xyz="0 0 0.1" rpy="0 0 0"/>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
     </visual>
+    <collision>
+      <geometry>
+        <cylinder radius="0.05" length="0.2"/>
+      </geometry>
+      <origin xyz="0 0 0.1" rpy="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="0.5"/>
+      <inertia ixx="0.005" ixy="0.0" ixz="0.0" iyy="0.005" iyz="0.0" izz="0.005"/>
+    </inertial>
   </link>
 
-  <joint name="base_to_right_leg" type="revolute">
+  <!-- Prismatic Joint -->
+  <joint name="prismatic_joint" type="prismatic">
     <parent link="base_link"/>
-    <child link="right_leg"/>
-    <origin xyz="0 -0.22 0.25"/>
-    <limit effort="1.1369" lower="-1" upper="1" velocity="4.36" />
+    <child link="moving_link"/>
+    <origin xyz="0 0 0.05" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="1000" velocity="1.0" lower="-0.25" upper="0.25"/> <!-- Limits for translation -->
   </joint>
 
 </robot>
