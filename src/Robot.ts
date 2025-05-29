@@ -44,6 +44,8 @@ export class Robot {
       // 2. base_footprint is the root of the transform tree for turtlebot and walking robots.
       // 3. All link transforms with no parent will be parented to this.transform.
 
+/*
+      // Commenting out this code for now. It turns out that some companies make up their own root node. Once we configure the visual tree, any unparented transform will be parented to this.transform.
 
       // for issue https://github.com/ms-iot/vscode-ros/issues/939,
       // Base_footprint is an orphan tree, so applying our root transform to convert to babylon coordinate system won't work.
@@ -55,9 +57,16 @@ export class Robot {
         base = this.links.get("base_footprint");
       }
 
+      // unitree uses world as the base link
+      if (base == null || base == undefined) {
+        base = this.links.get("world");
+      }
+
       if (base == undefined) {
         throw new Error("No base_link or base_footprint defined in this robot");
       } 
+*/
+
 
       // Fixup transform tree
       for (let [name, joint] of this.joints) {

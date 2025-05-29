@@ -50,6 +50,7 @@ function addTestToRobotScene(robotScene : RobotScene) {
     {name: "BB", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/bb.urdf"},
     {name: "Motoman", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/motoman.urdf"},
     {name: "Arti Robot", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/arti.urdf"},
+    {name: "Mule", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/mule.urdf"},
     {name: "inline", url: ""},
   ];
 
