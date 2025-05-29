@@ -9,7 +9,7 @@
       "request": "launch",
       "name": "Open viewer.html",
       "runtimeExecutable": "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
-      "file": "c:\\ws\\babylon_ros\\web\\viewer.html"
+      "file": "e:\\ws\\babylon_ros\\web\\viewer.html"
     }
   ]
 }

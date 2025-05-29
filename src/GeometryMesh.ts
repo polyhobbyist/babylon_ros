@@ -65,6 +65,7 @@ export class Mesh implements IGeometry {
             var meshdata = readFileSync(filePath).toString('base64');
 
             this.transform = new BABYLON.TransformNode(`mesh_${this.name}`, scene);
+            this.transform.scaling = this.scale;
 
             // Force the file to be read as base64 encoded data blob
             BABYLON.SceneLoader.ImportMesh(null, "", "data:;base64," + meshdata, scene, (mesh, ps, sk, ag, tn, g, l, sm) => {this.meshCallback(scene, mesh, ps, sk, ag, tn, g, l,sm)}, null, null, this.ext);
@@ -75,6 +76,7 @@ export class Mesh implements IGeometry {
                 this.ext = this.uri.substring(this.uri.lastIndexOf('.'));
                 this.name = filename.substring(0, filename.lastIndexOf('.'));
                 this.transform = new BABYLON.TransformNode(`mesh_${this.name}`, scene);
+                this.transform.scaling = this.scale;
                 BABYLON.SceneLoader.ImportMesh(null, base, filename, scene, (mesh, ps, sk, ag, tn, g, l, sm) => {this.meshCallback(scene, mesh, ps, sk, ag, tn, g, l, sm)});
             }
         }
