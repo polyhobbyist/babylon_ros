@@ -1,6 +1,6 @@
-<!-- Test case from URDF tutorials https://docs.ros.org/en/humble/Tutorials/Intermediate/URDF/Building-a-Visual-Robot-Model-with-URDF-from-Scratch.html -->
-
 <?xml version="1.0"?>
+
+<!-- Test case from URDF tutorials https://docs.ros.org/en/humble/Tutorials/Intermediate/URDF/Building-a-Visual-Robot-Model-with-URDF-from-Scratch.html -->
 <robot name="visual">
 
   <material name="blue">
