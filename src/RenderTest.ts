@@ -26,6 +26,40 @@ function addTestToRobotScene(robotScene : RobotScene) {
 
   robotScene.UILayer.addControl(testSelection);
 
+  // Add screenshot button at the top
+  var screenshotButton = GUI.Button.CreateSimpleButton("screenshotBtn", "📷 Screenshot");
+  screenshotButton.width = "150px";
+  screenshotButton.height = "30px";
+  screenshotButton.color = "white";
+  screenshotButton.cornerRadius = 5;
+  screenshotButton.background = "green";
+  screenshotButton.top = "10px";
+  screenshotButton.left = "10px";
+  screenshotButton.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+  screenshotButton.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+  screenshotButton.onPointerUpObservable.add(async () => {
+    try {
+      console.log("Taking screenshot...");
+      const base64Data = await robotScene.takeScreenshot();
+      
+      // Create a download link for the screenshot
+      const link = document.createElement('a');
+      link.href = `data:image/png;base64,${base64Data}`;
+      link.download = `robot_scene_${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      console.log("Screenshot saved!");
+      
+      // Also log the base64 data length for verification
+      console.log(`Screenshot data length: ${base64Data.length} characters`);
+    } catch (error) {
+      console.error("Error taking screenshot:", error);
+    }
+  });
+  robotScene.UILayer.addControl(screenshotButton);
+
   var basicGroup = new GUI.RadioGroup("Basic Tests");
   testSelection.addGroup(basicGroup);
 
