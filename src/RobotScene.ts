@@ -666,30 +666,16 @@ export class RobotScene {
    * @returns Promise<string> Base64 encoded PNG data string
    */
   public async takeScreenshot(width?: number, height?: number): Promise<string> {
-    if (!this.scene || !this.engine) {
-      throw new Error("Scene or engine not initialized");
+    if (!this.scene || !this.engine || !this.camera) {
+      throw new Error("Scene, engine, or camera not initialized");
     }
 
-    // Store current UI visibility states
-    const uiWasVisible = (this.UILayer?.getChildren().length ?? 0) > 0;
+    // Store current layer visibility states
     const utilLayerWasVisible = this.utilLayer?.shouldRender ?? false;
     const gizmoLayerWasVisible = this.gizmoLayer?.shouldRender ?? false;
 
-    // Store UI controls for restoration
-    const uiControls: GUI.Control[] = [];
-
     try {
-      // Hide all UI elements temporarily by storing references and removing them
-      if (this.UILayer) {
-        // Store all UI controls and remove them temporarily
-        const children = this.UILayer.getChildren();
-        for (let i = children.length - 1; i >= 0; i--) {
-          const control = children[i];
-          uiControls.push(control);
-          this.UILayer.removeControl(control);
-        }
-      }
-      
+      // Hide utility and gizmo layers only
       if (this.utilLayer) {
         this.utilLayer.shouldRender = false;
       }
@@ -697,116 +683,35 @@ export class RobotScene {
         this.gizmoLayer.shouldRender = false;
       }
 
-      // Get canvas dimensions
+      // Get canvas dimensions for defaults
       const canvas = this.engine.getRenderingCanvas();
-      if (!canvas) {
-        throw new Error("No rendering canvas found");
-      }
+      const targetWidth = width || canvas?.width || 1024;
+      const targetHeight = height || canvas?.height || 1024;
 
-      const targetWidth = width || canvas.width;
-      const targetHeight = height || canvas.height;
-
-      // Create a render target texture for capturing the scene
-      const renderTarget = new BABYLON.RenderTargetTexture(
-        "screenshot",
-        { width: targetWidth, height: targetHeight },
-        this.scene,
-        false, // generateMipMaps
-        true,  // doNotChangeAspectRatio
-        BABYLON.Constants.TEXTURETYPE_UNSIGNED_INT,
-        false, // isCube
-        BABYLON.Texture.NEAREST_SAMPLINGMODE,
-        true,  // generateDepthBuffer
-        false, // generateStencilBuffer
-        false, // isMulti
-        BABYLON.Constants.TEXTUREFORMAT_RGBA
-      );
-
-      // Add all meshes to render list (excluding UI elements)
-      if (this.scene.meshes) {
-        renderTarget.renderList = this.scene.meshes.filter(mesh => {
-          // Exclude UI-related meshes and gizmos
-          return !mesh.name.includes("gizmo") && 
-                 !mesh.name.includes("GUI") && 
-                 !mesh.name.includes("ui") &&
-                 mesh.isVisible;
+      // Use Babylon.JS's render target screenshot API
+      return new Promise<string>((resolve, reject) => {
+        this.scene!.executeWhenReady(() => {
+          try {
+            BABYLON.Tools.CreateScreenshotUsingRenderTarget(
+              this.engine!,
+              this.camera!,
+              { width: targetWidth, height: targetHeight },
+              (data: string) => {
+                // Return just the base64 data part (without the data:image/png;base64, prefix)
+                resolve(data.split(',')[1]);
+              },
+              'image/png',
+              1, // samples
+              false // antialiasing
+            );
+          } catch (error) {
+            reject(error);
+          }
         });
-      }
-
-      // Render the scene to the texture
-      renderTarget.render();
-
-      // Read the pixels from the render target
-      const buffer = await renderTarget.readPixels();
-      
-      if (!buffer) {
-        throw new Error("Failed to read pixels from render target");
-      }
-
-      // Create a canvas to convert the pixel data to PNG
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = targetWidth;
-      tempCanvas.height = targetHeight;
-      const ctx = tempCanvas.getContext('2d');
-      
-      if (!ctx) {
-        throw new Error("Failed to get 2D context from canvas");
-      }
-
-      // Create ImageData from the buffer
-      const imageData = ctx.createImageData(targetWidth, targetHeight);
-      
-      // Convert buffer to typed array for easier handling
-      let pixelData: Uint8Array;
-      if (buffer instanceof Uint8Array) {
-        pixelData = buffer;
-      } else if (buffer instanceof Float32Array) {
-        // Convert Float32Array to Uint8Array
-        pixelData = new Uint8Array(buffer.length);
-        for (let i = 0; i < buffer.length; i++) {
-          pixelData[i] = Math.floor(buffer[i] * 255);
-        }
-      } else {
-        // Handle other ArrayBufferView types
-        const view = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
-        pixelData = view;
-      }
-      
-      // Convert from RGBA to ImageData format with Y-flip
-      for (let i = 0; i < pixelData.length; i += 4) {
-        // Babylon.js uses RGBA, but we need to flip Y coordinate
-        const pixelIndex = i / 4;
-        const y = Math.floor(pixelIndex / targetWidth);
-        const x = pixelIndex % targetWidth;
-        const flippedY = targetHeight - 1 - y;
-        const dstIndex = (flippedY * targetWidth + x) * 4;
-        
-        imageData.data[dstIndex] = pixelData[i];         // R
-        imageData.data[dstIndex + 1] = pixelData[i + 1]; // G
-        imageData.data[dstIndex + 2] = pixelData[i + 2]; // B
-        imageData.data[dstIndex + 3] = pixelData[i + 3]; // A
-      }
-
-      // Put the image data on the canvas
-      ctx.putImageData(imageData, 0, 0);
-
-      // Convert to base64 PNG
-      const base64Data = tempCanvas.toDataURL('image/png');
-      
-      // Clean up
-      renderTarget.dispose();
-      
-      // Return just the base64 data part (without the data:image/png;base64, prefix)
-      return base64Data.split(',')[1];
+      });
 
     } finally {
-      // Restore UI visibility states
-      if (this.UILayer && uiWasVisible) {
-        // Re-add all UI controls
-        for (const control of uiControls) {
-          this.UILayer.addControl(control);
-        }
-      }
+      // Restore layer visibility states
       if (this.utilLayer) {
         this.utilLayer.shouldRender = utilLayerWasVisible;
       }

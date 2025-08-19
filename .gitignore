@@ -1,6 +1,7 @@
 web/*.js*
 web/user/**
-
+.vscode/*.db
+**/log
 # Logs
 logs
 *.log
