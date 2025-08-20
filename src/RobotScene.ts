@@ -7,6 +7,7 @@ import {Link} from './Link';
 import {Visual} from './Visual';
 import { JointRotationGizmo } from './JointRotationGizmo';
 import { JointPositionGizmo } from './JointPositionGizmo';
+import { Mesh } from './GeometryMesh';
 
 import * as GUI from 'babylonjs-gui';
 import * as ColladaFileLoader from '@polyhobbyist/babylon-collada-loader';
@@ -37,6 +38,13 @@ export class RobotScene {
   private gizmoLayer : BABYLON.UtilityLayerRenderer | undefined = undefined;
   private planeRotationGizmo: JointRotationGizmo | undefined = undefined;
   private planePositionGizmo: JointPositionGizmo | undefined = undefined;
+  private hasBeenFramed: boolean = false;
+  private pendingMeshLoads: number = 0;
+  private meshLoadPromises: Promise<void>[] = [];
+  private savedFramingTarget: BABYLON.Vector3 = new BABYLON.Vector3(0, 0, 0);
+  private savedFramingRadius: number = 1;
+  private savedFramingAlpha: number = -Math.PI / 3;
+  private savedFramingBeta: number = 5 * Math.PI / 12;
       
 
   clearStatus() {
@@ -341,9 +349,19 @@ export class RobotScene {
 
   public resetCamera() {
     if (this.camera) {
-      this.camera.alpha = - Math.PI / 3;
-      this.camera.beta = 5 * Math.PI / 12;
-      this.camera.target = new BABYLON.Vector3(0, 0, 0);
+      if (this.hasBeenFramed) {
+        // Use the saved auto-framing position
+        this.camera.setTarget(this.savedFramingTarget);
+        this.camera.radius = this.savedFramingRadius;
+        this.camera.alpha = this.savedFramingAlpha;
+        this.camera.beta = this.savedFramingBeta;
+      } else {
+        // Fall back to default position if no framing has been done
+        this.camera.alpha = -Math.PI / 3;
+        this.camera.beta = 5 * Math.PI / 12;
+        this.camera.target = new BABYLON.Vector3(0, 0, 0);
+        this.camera.radius = 1;
+      }
     }
   }
   
@@ -634,8 +652,46 @@ export class RobotScene {
     try {
       if (this.scene) {
         this.currentURDF = urdfText;
+        
+        // Reset mesh loading tracking and framing flag
+        this.meshLoadPromises = [];
+        this.pendingMeshLoads = 0;
+        this.hasBeenFramed = false;
+        
         this.currentRobot = await urdf.deserializeUrdfToRobot(urdfText);
+        
+        // Count and setup callbacks for mesh loading
+        this.currentRobot.links.forEach((link) => {
+          link.visuals.forEach((visual) => {
+            if (visual.geometry && visual.geometry instanceof Mesh) {
+              this.pendingMeshLoads++;
+              const meshLoadPromise = new Promise<void>((resolve) => {
+                visual.geometry?.setLoadCompleteCallback?.(() => {
+                  this.pendingMeshLoads--;
+                  resolve();
+                  
+                  // If all meshes are loaded and this is the first time, frame the model
+                  if (this.pendingMeshLoads === 0 && !this.hasBeenFramed) {
+                    // Use a small delay to ensure all transforms are updated
+                    setTimeout(() => {
+                      this.frameModel();
+                    }, 100);
+                  }
+                });
+              });
+              this.meshLoadPromises.push(meshLoadPromise);
+            }
+          });
+        });
+        
         this.currentRobot.create(this.scene);
+        
+        // If there are no meshes to load, frame immediately (for primitive geometries only)
+        if (this.pendingMeshLoads === 0 && !this.hasBeenFramed) {
+          setTimeout(() => {
+            this.frameModel();
+          }, 100);
+        }
       }
     } catch (err: any) {
 
@@ -657,6 +713,143 @@ export class RobotScene {
         text: `loaded urdf`,
       });
     }
+  }
+
+  /**
+   * Takes a screenshot of the scene without UI elements and returns it as a base64 encoded PNG string
+   * @param width Optional width for the screenshot. If not provided, uses current canvas width
+   * @param height Optional height for the screenshot. If not provided, uses current canvas height
+   * @returns Promise<string> Base64 encoded PNG data string
+   */
+  public async takeScreenshot(width?: number, height?: number): Promise<string> {
+    if (!this.scene || !this.engine || !this.camera) {
+      throw new Error("Scene, engine, or camera not initialized");
+    }
+
+    // Store current layer visibility states
+    const utilLayerWasVisible = this.utilLayer?.shouldRender ?? false;
+    const gizmoLayerWasVisible = this.gizmoLayer?.shouldRender ?? false;
+
+    try {
+      // Hide utility and gizmo layers only
+      if (this.utilLayer) {
+        this.utilLayer.shouldRender = false;
+      }
+      if (this.gizmoLayer) {
+        this.gizmoLayer.shouldRender = false;
+      }
+
+      // Get canvas dimensions for defaults
+      const canvas = this.engine.getRenderingCanvas();
+      const targetWidth = width || canvas?.width || 1024;
+      const targetHeight = height || canvas?.height || 1024;
+
+      // Use Babylon.JS's render target screenshot API
+      return new Promise<string>((resolve, reject) => {
+        this.scene!.executeWhenReady(() => {
+          try {
+            BABYLON.Tools.CreateScreenshotUsingRenderTarget(
+              this.engine!,
+              this.camera!,
+              { width: targetWidth, height: targetHeight },
+              (data: string) => {
+                // Return just the base64 data part (without the data:image/png;base64, prefix)
+                resolve(data.split(',')[1]);
+              },
+              'image/png',
+              1, // samples
+              false // antialiasing
+            );
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
+
+    } finally {
+      // Restore layer visibility states
+      if (this.utilLayer) {
+        this.utilLayer.shouldRender = utilLayerWasVisible;
+      }
+      if (this.gizmoLayer) {
+        this.gizmoLayer.shouldRender = gizmoLayerWasVisible;
+      }
+    }
+  }
+
+  /**
+   * Automatically frame the camera to show the entire robot model
+   */
+  private frameModel(): void {
+    if (!this.scene || !this.camera || !this.currentRobot) {
+      return;
+    }
+
+    // Get all meshes in the scene (excluding ground, world axis, etc.)
+    const robotMeshes: BABYLON.AbstractMesh[] = [];
+    
+    // Collect all meshes from robot links
+    this.currentRobot.links.forEach((link) => {
+      link.visuals.forEach((visual) => {
+        if (visual.geometry && visual.geometry.meshes) {
+          robotMeshes.push(...visual.geometry.meshes);
+        }
+      });
+    });
+
+    if (robotMeshes.length === 0) {
+      return;
+    }
+
+    // Calculate the bounding box of all robot meshes
+    let min = new BABYLON.Vector3(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE);
+    let max = new BABYLON.Vector3(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE);
+
+    robotMeshes.forEach((mesh) => {
+      const boundingInfo = mesh.getBoundingInfo();
+      const meshMin = boundingInfo.boundingBox.minimumWorld;
+      const meshMax = boundingInfo.boundingBox.maximumWorld;
+      
+      min = BABYLON.Vector3.Minimize(min, meshMin);
+      max = BABYLON.Vector3.Maximize(max, meshMax);
+    });
+
+    // Calculate the center and size of the bounding box
+    const center = BABYLON.Vector3.Center(min, max);
+    const size = max.subtract(min);
+    const maxDimension = Math.max(size.x, size.y, size.z);
+
+    // Set camera target to the center of the model
+    this.camera.setTarget(center);
+
+    // Calculate appropriate camera distance
+    // Use a factor to ensure the entire model is visible with some padding
+    const distance = maxDimension * 1.5;
+    this.camera.radius = Math.max(distance, 1); // Minimum radius of 1
+
+    // Keep the same viewing angles but ensure good framing
+    // You can adjust these angles if needed
+    this.camera.alpha = -Math.PI / 3;
+    this.camera.beta = 5 * Math.PI / 12;
+    
+    // Save the framing information for resetCamera()
+    this.savedFramingTarget = center.clone();
+    this.savedFramingRadius = this.camera.radius;
+    this.savedFramingAlpha = this.camera.alpha;
+    this.savedFramingBeta = this.camera.beta;
+    
+    this.hasBeenFramed = true;
+  }
+
+  /**
+   * Takes a screenshot of the scene without UI elements and returns it as a data URL
+   * @param width Optional width for the screenshot. If not provided, uses current canvas width
+   * @param height Optional height for the screenshot. If not provided, uses current canvas height
+   * @returns Promise<string> Data URL string (data:image/png;base64,...)
+   */
+  public async takeScreenshotDataURL(width?: number, height?: number): Promise<string> {
+    const base64Data = await this.takeScreenshot(width, height);
+    return `data:image/png;base64,${base64Data}`;
   }
 
   public async createScene(canvas: HTMLCanvasElement) {

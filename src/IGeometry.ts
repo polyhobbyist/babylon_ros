@@ -7,4 +7,5 @@ export interface IGeometry {
 
     create(scene: BABYLON.Scene, mat : Material | undefined) : void;
     dispose() : void;
+    setLoadCompleteCallback?(callback: () => void) : void;
 }

@@ -15,10 +15,15 @@ export class Mesh implements IGeometry {
     public skeletons : BABYLON.Skeleton[] | undefined = undefined;
     private ext: string = "";
     private name: string = "mesh";
+    private onLoadComplete?: () => void;
 
     constructor(uri: string, scale: BABYLON.Vector3) {
         this.uri = uri;
         this.scale = scale;
+    }
+    
+    public setLoadCompleteCallback(callback: () => void): void {
+        this.onLoadComplete = callback;
     }
     
     private meshCallback(scene: BABYLON.Scene, meshes : BABYLON.AbstractMesh[], particleSystems : BABYLON.IParticleSystem[] | undefined, skeletons : BABYLON.Skeleton[] | undefined, animationGroups: BABYLON.AnimationGroup[], transformNodes: BABYLON.TransformNode[], geometries: BABYLON.Geometry[], lights: BABYLON.Light[], spriteManagers: BABYLON.ISpriteManager[]) {
@@ -46,6 +51,11 @@ export class Mesh implements IGeometry {
                     });                
                 } 
             }
+        }
+        
+        // Call the load complete callback if set
+        if (this.onLoadComplete) {
+            this.onLoadComplete();
         }
     }
 

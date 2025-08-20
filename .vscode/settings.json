@@ -1,4 +1,11 @@
 {
   "ros.distro": "humble",
-  "github.copilot.chat.codeGeneration.useInstructionFiles": true
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "ROS2.distro": "kilted",
+  "python.autoComplete.extraPaths": [
+    "/opt/ros/kilted/lib/python3.12/site-packages"
+  ],
+  "python.analysis.extraPaths": [
+    "/opt/ros/kilted/lib/python3.12/site-packages"
+  ]
 }
