@@ -615,7 +615,6 @@ export class RobotScene {
     this.clearRotationGizmos();
     this.clearJointExerciseGizmos();
     this.clearStatus();
-    this.resetCamera();
 
     if (this.currentRobot) {
       var tempR = this.currentRobot;
