@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 Lou Amadio and Ranch Hand Robotics, LLC
+ * All rights reserved.
+ */
+
 import * as BABYLON from 'babylonjs';
 import * as Materials from 'babylonjs-materials';
 import * as urdf from './urdf';
@@ -32,25 +37,25 @@ function addTestToRobotScene(robotScene : RobotScene) {
   basicGroup.groupPanel.color = "white";
 
   var basicTestList = [ 
-    {name: "Basic", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic.urdf"},
-    {name: "Basic Joint", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_joint.urdf"},
-    {name: "Basic Revolute Joint", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_joint_with_effort.urdf"},
-    {name: "Planar Joint", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_joint_planar.urdf"},
-    {name: "Prismatic Joint", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_joint_prismatic.urdf"},
-    {name: "Basic Material", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_material.urdf"},
-    {name: "Basic Remote Mesh", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_remote_mesh.urdf"},
-    {name: "Basic with STL", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/basic_with_stl_mesh.urdf"},
-    {name: "Orientation", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/orientation.urdf"},
-    {name: "Bad", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/bad.urdf"},
-    {name: "DAE", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/leo_chassis.urdf"},
+    {name: "Basic", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/basic.urdf"},
+    {name: "Basic Joint", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/basic_with_joint.urdf"},
+    {name: "Basic Revolute Joint", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/basic_with_joint_with_effort.urdf"},
+    {name: "Planar Joint", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/basic_with_joint_planar.urdf"},
+    {name: "Prismatic Joint", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/basic_with_joint_prismatic.urdf"},
+    {name: "Basic Material", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/basic_with_material.urdf"},
+    {name: "Basic Remote Mesh", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/basic_with_remote_mesh.urdf"},
+    {name: "Basic with STL", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/basic_with_stl_mesh.urdf"},
+    {name: "Orientation", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/orientation.urdf"},
+    {name: "Bad", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/bad.urdf"},
+    {name: "DAE", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/leo_chassis.urdf"},
   ];
 
   var robotTestList = [ 
-    {name: "leo", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/leo.urdf"},
-    {name: "BB", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/bb.urdf"},
-    {name: "Motoman", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/motoman.urdf"},
-    {name: "Arti Robot", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/arti.urdf"},
-    {name: "Mule", url: "https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/mule.urdf"},
+    {name: "leo", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/leo.urdf"},
+    {name: "BB", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/bb.urdf"},
+    {name: "Motoman", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/motoman.urdf"},
+    {name: "Arti Robot", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/arti.urdf"},
+    {name: "Mule", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/mule.urdf"},
     {name: "inline", url: ""},
   ];
 

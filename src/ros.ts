@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 Lou Amadio and Ranch Hand Robotics, LLC
+ * All rights reserved.
+ */
+
 export * from "./GeometryCylinder"
 export * from "./GeometryBox"
 export * from "./GeometryMesh"

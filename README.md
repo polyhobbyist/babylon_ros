@@ -19,7 +19,7 @@ Babylon_ROS is a Node.JS API for rendering ROS 2 based URDFs and Xacro in a web 
 Babylon ROS is an npm package that can be installed in your web application. To install, run:
 
 ```bash
-npm install --save @polyhobbyist/babylon_ros
+npm install --save @ranch-hand-robotics/babylon_ros
 ```
 
 ## Usage
@@ -90,5 +90,5 @@ link.click();
 The screenshot API automatically hides UI elements (buttons, gizmos, etc.) during capture, ensuring clean robot visualizations. See [SCREENSHOT_API.md](./SCREENSHOT_API.md) for complete documentation.
 
 ## Support
-Support is available through the [GitHub Discussion at Ranch Hand Robotics](https://github.com/orgs/Ranch-Hand-Robotics/discussions).
+Support is available through the [GitHub Discussion at Ranch Hand Robotics](https://github.com/Ranch-Hand-Robotics/babylon_ros/discussions).
 

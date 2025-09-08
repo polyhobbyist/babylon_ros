@@ -12,7 +12,7 @@
             <visual>
                 <origin xyz="0 0 -0.127" rpy="0 0 1.5707963267948966"/>
                 <geometry>
-                  <mesh filename="https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/hf_wheel.stl"/>
+                  <mesh filename="https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/hf_wheel.stl"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
@@ -41,7 +41,7 @@
             <visual>
                 <origin xyz="0 0 -0.127" rpy="0 0 1.5707963267948966"/>
                 <geometry>
-                  <mesh filename="https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/hf_wheel.stl"/>
+                  <mesh filename="https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/hf_wheel.stl"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
@@ -70,7 +70,7 @@
             <visual>
                 <origin xyz="0 0 -0.127" rpy="0 0 1.5707963267948966"/>
                 <geometry>
-                  <mesh filename="https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/hf_wheel.stl"/>
+                  <mesh filename="https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/hf_wheel.stl"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
@@ -99,7 +99,7 @@
             <visual>
                 <origin xyz="0 0 -0.127" rpy="0 0 1.5707963267948966"/>
                 <geometry>
-                  <mesh filename="https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/hf_wheel.stl"/>
+                  <mesh filename="https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/hf_wheel.stl"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
@@ -128,7 +128,7 @@
             <visual>
                 <origin xyz="0 0 -0.127" rpy="0 0 1.5707963267948966"/>
                 <geometry>
-                  <mesh filename="https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/hf_wheel.stl"/>
+                  <mesh filename="https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/hf_wheel.stl"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
@@ -157,7 +157,7 @@
             <visual>
                 <origin xyz="0 0 -0.127" rpy="0 0 1.5707963267948966"/>
                 <geometry>
-                  <mesh filename="https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/hf_wheel.stl"/>
+                  <mesh filename="https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/hf_wheel.stl"/>
                 </geometry>
                 <material name="grey"/>
             </visual>

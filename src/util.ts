@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 Lou Amadio and Ranch Hand Robotics, LLC
+ * All rights reserved.
+ */
+
 import * as BABYLON from 'babylonjs';
 
 export function parseVector(vec: string) : BABYLON.Vector3 {
