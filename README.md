@@ -4,6 +4,115 @@
 
 Babylon_ROS is a Node.JS API for rendering ROS 2 based URDFs and Xacro in a web browser using Babylon.js 3D.
 
+## Live Demo
+
+Here's the Mule robot (6-wheeled rover) rendered live using babylon_ros:
+
+<!-- GitHub live demo - works on GitHub.com -->
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://via.placeholder.com/800x400/1a1a1a/ffffff?text=🐴+Mule+Robot+3D+Viewer%0A%0A🚀+Click+to+view+live+on+GitHub">
+    <img alt="Mule Robot 3D Viewer" src="https://via.placeholder.com/800x400/f8f9fa/000000?text=🐴+Mule+Robot+3D+Viewer%0A%0A🚀+Click+to+view+live+on+GitHub" width="800" height="400">
+  </picture>
+</div>
+
+<!-- Interactive viewer (works on GitHub Pages, blocked in VS Code preview due to CSP) -->
+<div style="position: relative; width: 100%; height: 500px; border: 2px solid #ddd; border-radius: 8px; overflow: hidden; margin: 20px 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <canvas id="babylonCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
+    <div id="robotControls" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 8px 12px; border-radius: 6px; font-family: Arial, sans-serif; font-size: 12px; z-index: 100;">
+        <div style="margin-bottom: 8px; font-weight: bold;">🐴 Mule Robot</div>
+        <button onclick="resetRobotCamera()" style="margin: 2px; padding: 4px 8px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">🎯 Reset View</button>
+        <button onclick="takeRobotScreenshot()" style="margin: 2px; padding: 4px 8px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">📸 Screenshot</button>
+    </div>
+    <div id="robotLoading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: white; padding: 20px; border-radius: 8px; text-align: center; font-family: Arial, sans-serif;">
+        <div style="font-size: 18px; margin-bottom: 10px;">🤖 Loading Mule Robot...</div>
+        <div style="font-size: 12px; opacity: 0.8;">Powered by babylon_ros</div>
+        <div style="font-size: 10px; margin-top: 8px; opacity: 0.6;">Note: Interactive viewer blocked in VS Code preview due to CSP.<br>View on GitHub.com for full functionality.</div>
+    </div>
+</div>
+
+<script async src="https://unpkg.com/babylonjs@7.16.1/babylon.js"></script>
+<script async src="https://unpkg.com/babylonjs-gui@7.16.1/babylon.gui.min.js"></script>
+<script async src="https://unpkg.com/@ranch-hand-robotics/babylon_ros/web/ros.js"></script>
+
+<script>
+(function() {
+    let globalRobotScene;
+    let scriptsLoaded = 0;
+    const totalScripts = 3;
+
+    function checkAllScriptsLoaded() {
+        scriptsLoaded++;
+        if (scriptsLoaded >= totalScripts && typeof babylon_ros !== 'undefined') {
+            loadEmbeddedRobot();
+        }
+    }
+
+    async function loadEmbeddedRobot() {
+        try {
+            const canvas = document.getElementById('babylonCanvas');
+            if (!canvas) return;
+            
+            const urdfUrl = 'https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/mule.urdf';
+            const response = await fetch(urdfUrl);
+            const urdfText = await response.text();
+
+            globalRobotScene = new babylon_ros.RobotScene();
+            await globalRobotScene.createScene(canvas);
+            await globalRobotScene.applyURDF(urdfText);
+            
+            const loading = document.getElementById('robotLoading');
+            if (loading) loading.style.display = 'none';
+            
+            console.log('🎉 Embedded Mule robot loaded successfully!');
+        } catch (error) {
+            console.error('❌ Error loading embedded robot:', error);
+            const loading = document.getElementById('robotLoading');
+            if (loading) {
+                loading.innerHTML = `
+                    <div style="color: #ff6b6b; font-size: 16px;">⚠️ Failed to load robot</div>
+                    <div style="font-size: 12px; margin-top: 8px; opacity: 0.8;">${error.message}</div>
+                    <div style="font-size: 10px; margin-top: 8px; opacity: 0.6;">Try viewing on GitHub.com or GitHub Pages</div>
+                `;
+            }
+        }
+    }
+
+    window.resetRobotCamera = function() {
+        if (globalRobotScene) {
+            globalRobotScene.resetCamera();
+        }
+    };
+
+    window.takeRobotScreenshot = async function() {
+        if (globalRobotScene) {
+            try {
+                const base64Data = await globalRobotScene.takeScreenshot();
+                const link = document.createElement('a');
+                link.href = 'data:image/png;base64,' + base64Data;
+                link.download = 'mule_robot_' + new Date().toISOString().slice(0,10) + '.png';
+                link.click();
+            } catch (error) {
+                console.error('Screenshot failed:', error);
+            }
+        }
+    };
+
+    // Try to load when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(checkAllScriptsLoaded, 2000);
+        });
+    } else {
+        setTimeout(checkAllScriptsLoaded, 2000);
+    }
+})();
+</script>
+
+> **📝 Note:** The interactive 3D viewer above works on GitHub.com and GitHub Pages, but is blocked in VS Code's markdown preview due to Content Security Policy restrictions. For the full interactive experience, view this README on GitHub.com.
+
+*🎯 Interactive 3D robot viewer • 🔄 Rotate with mouse • 📸 Download screenshots*
+
 ## Features
 
 - 🤖 **URDF and Xacro Object Model**: Loads and validates URDF and Xacro files into an object model you can access
@@ -181,20 +290,40 @@ Here's a complete example that renders the mule robot from this repository:
 </html>
 ```
 
-### GitHub README Integration
-To embed a live robot viewer in your GitHub README, you can use GitHub Pages or any static hosting service. Here's how to set it up:
+### Embedding Robot Viewers Directly in Markdown
 
-1. **Create the viewer HTML file** (as shown above) in your repository
-2. **Enable GitHub Pages** for your repository  
-3. **Link to the live viewer** in your README:
+You can embed live robot visualizations directly in GitHub README files using inline HTML and JavaScript. This repository demonstrates this approach with the Mule robot shown above.
 
-```markdown
-## Live Robot Visualization
+**Example Inline Embedding:**
 
-[🚀 View the Mule Robot in 3D](https://ranch-hand-robotics.github.io/babylon_ros/mule_viewer.html)
+```html
+<div style="position: relative; width: 100%; height: 500px; border: 2px solid #ddd; border-radius: 8px; overflow: hidden;">
+    <canvas id="robotCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
+    <!-- Controls and loading UI here -->
+</div>
 
-![Mule Robot Preview](https://via.placeholder.com/800x400/f0f0f0/333?text=Click+above+to+view+live+3D+model)
+<script src="https://unpkg.com/babylonjs@7.16.1/babylon.js"></script>
+<script src="https://unpkg.com/@ranch-hand-robotics/babylon_ros/web/ros.js"></script>
+<script>
+// Robot loading and control code here
+async function loadYourRobot() {
+    const canvas = document.getElementById('robotCanvas');
+    const robotScene = new babylon_ros.RobotScene();
+    await robotScene.createScene(canvas);
+    
+    // Fetch your URDF
+    const response = await fetch('https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/refs/heads/main/test/testdata/mule.urdf');
+    const urdfText = await response.text();
+    await robotScene.applyURDF(urdfText);
+}
+</script>
 ```
+
+**Benefits of Inline Embedding:**
+- ✅ No separate HTML files needed
+- ✅ Everything contained in the README  
+- ✅ Direct interaction without leaving GitHub
+- ✅ Easy to customize and maintain
 
 ## Screenshot API
 
