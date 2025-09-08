@@ -1,5 +1,5 @@
 {
-  "name": "@ranch-hand-robotics/babylon_ros",
+  "name": "@ranchhandrobotics/babylon_ros",
   "repository": {
     "type": "git",
     "url": "https://github.com/Ranch-Hand-Robotics/babylon_ros.git"
