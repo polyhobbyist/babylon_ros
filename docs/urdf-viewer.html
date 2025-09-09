@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URDF Viewer - babylon_ros</title>
+    <style>
+        html, body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            display: block;
+        }
+        #controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            z-index: 100;
+            font-size: 13px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        #controls h4 {
+            margin: 0 0 10px 0;
+            font-size: 15px;
+            color: #fff;
+        }
+        #controls .robot-info {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+        button {
+            margin: 3px;
+            padding: 6px 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:active {
+            transform: translateY(1px);
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            z-index: 200;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+        #loading .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(220, 53, 69, 0.95);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            z-index: 200;
+            max-width: 500px;
+            display: none;
+        }
+        .hidden {
+            display: none !important;
+        }
+        #urlInfo {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            max-width: 300px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas" touch-action="none"></canvas>
+    
+    <div id="loading">
+        <div class="spinner"></div>
+        <div style="font-size: 18px; margin-bottom: 8px;">Loading Robot...</div>
+        <div id="loadingUrl" style="font-size: 12px; opacity: 0.8;"></div>
+        <div style="font-size: 10px; margin-top: 10px; opacity: 0.6;">Powered by babylon_ros</div>
+    </div>
+    
+    <div id="error">
+        <h3>❌ Failed to Load Robot</h3>
+        <div id="errorMessage"></div>
+        <div style="margin-top: 15px; font-size: 12px;">
+            <strong>Common issues:</strong><br>
+            • URDF file not found or inaccessible<br>
+            • CORS restrictions on the server<br>
+            • Invalid URDF format<br>
+            • Network connectivity issues
+        </div>
+    </div>
+    
+    <div id="controls" class="hidden">
+        <h4 id="robotName">🤖 Robot Viewer</h4>
+        <div class="robot-info" id="robotInfo"></div>
+        <button onclick="resetCamera()">🎯 Reset View</button>
+        <button onclick="takeScreenshot()">📸 Screenshot</button>
+        <button onclick="toggleWireframe()">🔗 Wireframe</button>
+    </div>
+
+    <div id="urlInfo">
+        <strong>URDF:</strong> <span id="currentUrl">No URL specified</span>
+    </div>
+
+    <!-- Load dependencies from unpkg -->
+    <script src="https://unpkg.com/babylonjs@7.16.1/babylon.js"></script>
+    <script src="https://unpkg.com/babylonjs-gui@7.16.1/babylon.gui.min.js"></script>
+    <script src="https://unpkg.com/@ranch-hand-robotics/babylon_ros/web/ros.js"></script>
+
+    <script>
+        let robotScene;
+        let isWireframe = false;
+
+        // Parse URL parameters
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Get robot name from URL or filename
+        function extractRobotName(url) {
+            if (!url) return 'Unknown Robot';
+            const filename = url.split('/').pop();
+            const name = filename.replace('.urdf', '').replace(/[_-]/g, ' ');
+            return name.charAt(0).toUpperCase() + name.slice(1);
+        }
+
+        // Main function to load robot
+        async function loadRobot() {
+            try {
+                // Get URDF URL from query parameter
+                const urdfUrl = getUrlParameter('urdf') || getUrlParameter('url') || getUrlParameter('file');
+                
+                if (!urdfUrl) {
+                    throw new Error('No URDF URL specified. Add ?urdf=YOUR_URDF_URL to the page URL.');
+                }
+
+                // Update UI with URL info
+                document.getElementById('currentUrl').textContent = urdfUrl;
+                document.getElementById('loadingUrl').textContent = `Fetching: ${urdfUrl}`;
+
+                // Fetch the URDF file
+                const response = await fetch(urdfUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const urdfText = await response.text();
+
+                // Validate basic URDF structure
+                if (!urdfText.includes('<robot') || !urdfText.includes('</robot>')) {
+                    throw new Error('Invalid URDF format: Missing <robot> tags');
+                }
+
+                // Create the robot scene
+                const canvas = document.getElementById('renderCanvas');
+                robotScene = new babylon_ros.RobotScene();
+                await robotScene.createScene(canvas);
+                
+                // Load and render the URDF
+                await robotScene.applyURDF(urdfText);
+                
+                // Update UI
+                const robotName = extractRobotName(urdfUrl);
+                document.getElementById('robotName').textContent = `🤖 ${robotName}`;
+                document.getElementById('robotInfo').textContent = `Loaded from: ${new URL(urdfUrl).hostname}`;
+                
+                // Hide loading, show controls
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('controls').classList.remove('hidden');
+                
+                console.log('✅ Robot loaded successfully:', robotName);
+                
+            } catch (error) {
+                console.error('❌ Error loading robot:', error);
+                showError(error.message);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+
+        function resetCamera() {
+            if (robotScene) {
+                robotScene.resetCamera();
+            }
+        }
+
+        function toggleWireframe() {
+            if (robotScene && robotScene.scene) {
+                isWireframe = !isWireframe;
+                robotScene.scene.meshes.forEach(mesh => {
+                    if (mesh.material) {
+                        mesh.material.wireframe = isWireframe;
+                    }
+                });
+                
+                const button = event.target;
+                button.textContent = isWireframe ? '🔳 Solid' : '🔗 Wireframe';
+            }
+        }
+
+        async function takeScreenshot() {
+            if (robotScene) {
+                try {
+                    const base64Data = await robotScene.takeScreenshot();
+                    const robotName = document.getElementById('robotName').textContent.replace('🤖 ', '').replace(/\s+/g, '_').toLowerCase();
+                    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                    
+                    const link = document.createElement('a');
+                    link.href = `data:image/png;base64,${base64Data}`;
+                    link.download = `${robotName}_${timestamp}.png`;
+                    link.click();
+                    
+                    console.log('📸 Screenshot saved');
+                } catch (error) {
+                    console.error('Screenshot failed:', error);
+                    alert('Screenshot failed: ' + error.message);
+                }
+            }
+        }
+
+        // Load robot when page loads
+        window.addEventListener('load', loadRobot);
+    </script>
+</body>
+</html>
