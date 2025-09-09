@@ -2,8 +2,16 @@ Babylon_ros is a Node.JS API for rendering [ROS 2](https://ros.org) based URDFs 
 
 
 <div align="center">
-  
-[![Mule Robot Demo](https://img.shields.io/badge/🤖_Interactive_Demo-View_3D_Robot-blue?style=for-the-badge&logo=github)](https://ranch-hand-robotics.github.io/babylon_ros/urdf-viewer.html?urdf=https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/mule.urdf)
+
+<iframe src="urdf-viewer.html?urdf=https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/mule.urdf" 
+        width="auto" 
+        height="80%" 
+        frameborder="0" 
+        style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 20px 0;">
+</iframe>
+
+<p><strong>🎯 Interactive 3D robot viewer embedded above</strong></p>
+<p><em>🔄 Rotate with mouse • 📸 Download screenshots • 🔗 Toggle wireframe</em></p>
 
 </div>
 

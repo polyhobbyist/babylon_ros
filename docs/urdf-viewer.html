@@ -147,7 +147,6 @@
         <strong>URDF:</strong> <span id="currentUrl">No URL specified</span>
     </div>
 
-    <!-- Load dependencies from unpkg -->
     <script src="./ros.js"></script>
 
     <script>
@@ -234,8 +233,28 @@
             document.getElementById('error').style.display = 'block';
         }
 
-        // Load robot when page loads
-        window.addEventListener('load', loadRobot);
+        // Wait for all scripts to load before initializing
+        function waitForScripts() {
+            console.log('🔍 Checking script availability:', {
+                BABYLON: typeof BABYLON,
+                babylon_ros: typeof babylon_ros
+            });
+            
+            if (typeof BABYLON !== 'undefined' && typeof babylon_ros !== 'undefined') {
+                console.log('✅ All scripts loaded, initializing robot...');
+                loadRobot();
+            } else {
+                console.log('⏳ Waiting for scripts to load...');
+                setTimeout(waitForScripts, 500);
+            }
+        }
+
+        // Start checking when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', waitForScripts);
+        } else {
+            waitForScripts();
+        }
     </script>
 </body>
 </html>
