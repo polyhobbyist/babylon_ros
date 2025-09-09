@@ -16,7 +16,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
       - run: npm run build --if-present
-      - run: cp -r ./dist/ros.js ./docs/ros.js
+      - run: cp -r ./web/ros.js ./docs/ros.js
       - name: Deploy docs
         run: |
           sudo apt-get install -y python3-pip
