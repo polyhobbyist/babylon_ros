@@ -147,7 +147,53 @@
         <strong>URDF:</strong> <span id="currentUrl">No URL specified</span>
     </div>
 
-    <script src="./ros.js"></script>
+    <script>
+        // Try multiple script loading strategies
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = () => {
+                    console.log('✅ Script loaded successfully:', src);
+                    resolve();
+                };
+                script.onerror = () => {
+                    console.error('❌ Failed to load script:', src);
+                    reject(new Error(`Failed to load ${src}`));
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        // Try different paths for ros.js
+        async function loadRosScript() {
+            const possiblePaths = [
+                'ros.js',           // Current directory
+                './ros.js',         // Explicit current directory  
+                '../ros.js',        // Parent directory
+                '/ros.js',          // Root
+                window.location.pathname.replace(/\/[^\/]*$/, '/ros.js') // Calculated path
+            ];
+
+            for (const path of possiblePaths) {
+                try {
+                    console.log('🔄 Trying to load ros.js from:', path);
+                    await loadScript(path);
+                    console.log('✅ Successfully loaded ros.js from:', path);
+                    return;
+                } catch (error) {
+                    console.log('❌ Failed to load from:', path);
+                    continue;
+                }
+            }
+
+            // If all paths fail, show error
+            showError(`Failed to load ros.js from any of these paths:\n${possiblePaths.map(p => `• ${p}`).join('\n')}\n\nPossible issues:\n• File doesn't exist or isn't accessible\n• CORS policy restrictions\n• Server not serving JavaScript files properly\n• Network connectivity issues\n\nPlease check:\n• Developer tools Network tab for errors\n• That ros.js exists in the same directory as this HTML file\n• That your web server is configured to serve .js files`);
+        }
+
+        // Start loading the script
+        loadRosScript();
+    </script>
 
     <script>
         let robotScene;
@@ -234,15 +280,25 @@
         }
 
         // Wait for all scripts to load before initializing
+        let scriptCheckAttempts = 0;
+        const maxAttempts = 20; // 10 seconds max wait
+        
         function waitForScripts() {
-            console.log('🔍 Checking script availability:', {
+            scriptCheckAttempts++;
+            console.log(`🔍 Checking script availability (attempt ${scriptCheckAttempts}/${maxAttempts}):`, {
                 BABYLON: typeof BABYLON,
-                babylon_ros: typeof babylon_ros
+                babylon_ros: typeof babylon_ros,
+                window_BABYLON: typeof window.BABYLON,
+                window_babylon_ros: typeof window.babylon_ros
             });
             
-            if (typeof BABYLON !== 'undefined' && typeof babylon_ros !== 'undefined') {
-                console.log('✅ All scripts loaded, initializing robot...');
+            // Check if babylon_ros is available (it should contain BABYLON)
+            if (typeof babylon_ros !== 'undefined' || typeof window.babylon_ros !== 'undefined') {
+                console.log('✅ babylon_ros loaded, initializing robot...');
                 loadRobot();
+            } else if (scriptCheckAttempts >= maxAttempts) {
+                console.error('❌ Timeout waiting for scripts to load');
+                showError(`Scripts failed to load after ${maxAttempts/2} seconds.\n\nPossible issues:\n• ros.js file not found or not accessible\n• CORS policy blocking script execution\n• JavaScript file corrupted or invalid\n• Server not configured to serve .js files\n\nDebugging info:\n• Current URL: ${window.location.href}\n• Expected script path: ${window.location.origin}${window.location.pathname.replace(/\/[^\/]*$/, '')}/ros.js\n• Available globals: ${Object.getOwnPropertyNames(window).filter(name => name.toLowerCase().includes('babylon')).join(', ') || 'none'}`);
             } else {
                 console.log('⏳ Waiting for scripts to load...');
                 setTimeout(waitForScripts, 500);
