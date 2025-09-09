@@ -10,6 +10,13 @@ jobs:
       - name: Checkout main
         uses: actions/checkout@v2
 
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: cp -r ./dist/ros.js ./docs/ros.js
       - name: Deploy docs
         run: |
           sudo apt-get install -y python3-pip

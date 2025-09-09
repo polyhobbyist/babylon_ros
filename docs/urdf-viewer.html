@@ -141,9 +141,6 @@
     <div id="controls" class="hidden">
         <h4 id="robotName">🤖 Robot Viewer</h4>
         <div class="robot-info" id="robotInfo"></div>
-        <button onclick="resetCamera()">🎯 Reset View</button>
-        <button onclick="takeScreenshot()">📸 Screenshot</button>
-        <button onclick="toggleWireframe()">🔗 Wireframe</button>
     </div>
 
     <div id="urlInfo">
@@ -151,9 +148,7 @@
     </div>
 
     <!-- Load dependencies from unpkg -->
-    <script src="https://unpkg.com/babylonjs@7.16.1/babylon.js"></script>
-    <script src="https://unpkg.com/babylonjs-gui@7.16.1/babylon.gui.min.js"></script>
-    <script src="https://unpkg.com/@ranch-hand-robotics/babylon_ros/web/ros.js"></script>
+    <script src="./ros.js"></script>
 
     <script>
         let robotScene;
@@ -194,11 +189,6 @@
                 }
                 const urdfText = await response.text();
 
-                // Validate basic URDF structure
-                if (!urdfText.includes('<robot') || !urdfText.includes('</robot>')) {
-                    throw new Error('Invalid URDF format: Missing <robot> tags');
-                }
-
                 // Create the robot scene
                 const canvas = document.getElementById('renderCanvas');
                 robotScene = new babylon_ros.RobotScene();
@@ -206,6 +196,20 @@
                 
                 // Load and render the URDF
                 await robotScene.applyURDF(urdfText);
+                robotScene.createUI();
+                robotScene.engine.runRenderLoop(function () {
+                    if (robotScene !== undefined && robotScene.scene !== undefined) {
+                    robotScene.scene.render();
+                    }
+                });
+                
+                robotScene.engine.resize();
+                
+                window.addEventListener("resize", function () {
+                    if (robotScene !== undefined && robotScene.engine !== undefined) {
+                    robotScene.engine.resize();
+                    }
+                });  
                 
                 // Update UI
                 const robotName = extractRobotName(urdfUrl);
@@ -228,46 +232,6 @@
             document.getElementById('loading').classList.add('hidden');
             document.getElementById('errorMessage').textContent = message;
             document.getElementById('error').style.display = 'block';
-        }
-
-        function resetCamera() {
-            if (robotScene) {
-                robotScene.resetCamera();
-            }
-        }
-
-        function toggleWireframe() {
-            if (robotScene && robotScene.scene) {
-                isWireframe = !isWireframe;
-                robotScene.scene.meshes.forEach(mesh => {
-                    if (mesh.material) {
-                        mesh.material.wireframe = isWireframe;
-                    }
-                });
-                
-                const button = event.target;
-                button.textContent = isWireframe ? '🔳 Solid' : '🔗 Wireframe';
-            }
-        }
-
-        async function takeScreenshot() {
-            if (robotScene) {
-                try {
-                    const base64Data = await robotScene.takeScreenshot();
-                    const robotName = document.getElementById('robotName').textContent.replace('🤖 ', '').replace(/\s+/g, '_').toLowerCase();
-                    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-                    
-                    const link = document.createElement('a');
-                    link.href = `data:image/png;base64,${base64Data}`;
-                    link.download = `${robotName}_${timestamp}.png`;
-                    link.click();
-                    
-                    console.log('📸 Screenshot saved');
-                } catch (error) {
-                    console.error('Screenshot failed:', error);
-                    alert('Screenshot failed: ' + error.message);
-                }
-            }
         }
 
         // Load robot when page loads
