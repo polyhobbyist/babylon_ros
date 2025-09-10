@@ -57,6 +57,11 @@ export class RobotScene {
   private menuScrollViewer: GUI.ScrollViewer | undefined = undefined;
   private menuContainer: GUI.Rectangle | undefined = undefined;
   private isMenuExpanded: boolean = false;
+  
+  // Grid units properties
+  private gridUnitsVisible: boolean = false;
+  private currentGridUnit: string = "1m"; // "10cm", "1m"
+  private gridUnitLabels: BABYLON.AbstractMesh[] = [];
       
 
   clearStatus() {
@@ -527,6 +532,17 @@ export class RobotScene {
       }
     });
     this.menuPanel.addControl(resetButton);
+
+    // Grid unit buttons
+    const gridUnits10cmButton = this.createMenuButton("gridUnits10cm", "Grid: 10cm", () => {
+      this.toggleGridUnits("10cm");
+    });
+    this.menuPanel.addControl(gridUnits10cmButton);
+
+    const gridUnits1mButton = this.createMenuButton("gridUnits1m", "Grid: 1m", () => {
+      this.toggleGridUnits("1m");
+    });
+    this.menuPanel.addControl(gridUnits1mButton);
   }
 
   toggleMenu() {
@@ -547,9 +563,11 @@ export class RobotScene {
       return;
     }
 
-    var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", 50, this.scene, true);
+    // Use larger texture size for better text quality and to prevent clipping
+    var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", 128, this.scene, true);
     dynamicTexture.hasAlpha = true;
-    dynamicTexture.drawText(text, 5, 40, "bold 36px Arial", color, "transparent", true);
+    // Center the text and use appropriate font size
+    dynamicTexture.drawText(text, null, null, "bold 36px Arial", color, "transparent", true);
     var plane = BABYLON.MeshBuilder.CreatePlane("TextPlane", {size: size}, this.scene);
     let material = new BABYLON.StandardMaterial("TextPlaneMaterial", this.scene);
     material.backFaceCulling = false;
@@ -620,6 +638,99 @@ export class RobotScene {
       } else {
         this.worldAxis.setEnabled(true);
       }
+    }
+  }
+
+  clearGridUnits() {
+    this.gridUnitLabels.forEach((label) => {
+      label.dispose();
+    });
+    this.gridUnitLabels = [];
+  }
+
+  createGridUnits(unit: string) {
+    if (!this.scene) {
+      return;
+    }
+
+    this.clearGridUnits();
+    this.currentGridUnit = unit;
+
+    let increment: number;
+    let range: number;
+    let labelSize: number;
+    
+    switch (unit) {
+      case "10cm":
+        increment = 0.1; // 10cm in meters
+        range = 5; // Show up to 5 meters in each direction
+        labelSize = 0.1; // Increased size for better visibility
+        break;
+      case "1m":
+      default:
+        increment = 1; // 1 meter
+        range = 25; // Show up to 25 meters in each direction
+        labelSize = 0.3; // Increased size for better visibility
+        break;
+    }
+
+    // Create labels along X axis (red)
+    for (let x = -range; x <= range; x += increment) {
+      if (Math.abs(x) < 0.001) continue; // Skip origin
+      
+      const labelText = unit === "10cm" ? `${Math.round(x * 100)} cm` : 
+                       `${Math.round(x)} m`;
+      
+      const label = this.makeTextPlane(labelText, "red", labelSize);
+      if (label) {
+        // Convert to ROS coordinates: X points forward, Y points left, Z points up
+        label.position = new BABYLON.Vector3(0, 0, x); // X-axis in ROS becomes Z in Babylon (after rotation)
+        label.rotation = new BABYLON.Vector3(-Math.PI/2, 0, 0); // Rotate to lie flat on ground
+        this.gridUnitLabels.push(label);
+      }
+    }
+
+    // Create labels along Y axis (green)  
+    for (let y = -range; y <= range; y += increment) {
+      if (Math.abs(y) < 0.001) continue; // Skip origin
+      
+      const labelText = unit === "10cm" ? `${Math.round(y * 100)} cm` : 
+                       `${Math.round(y)} m`;
+      
+      const label = this.makeTextPlane(labelText, "green", labelSize);
+      if (label) {
+        // Convert to ROS coordinates: Y-axis in ROS becomes -X in Babylon (after rotation)
+        label.position = new BABYLON.Vector3(-y, 0, 0); // Y-axis in ROS becomes -X in Babylon (after rotation)
+        label.rotation = new BABYLON.Vector3(-Math.PI/2, Math.PI/2, 0); // Rotate to lie flat and face correct direction
+        this.gridUnitLabels.push(label);
+      }
+    }
+
+    // Create labels along Z axis (blue) - vertical height markers
+    for (let z = increment; z <= range; z += increment) { // Start from increment (skip origin and negative values)
+      const labelText = unit === "10cm" ? `${Math.round(z * 100)} cm` : 
+                       `${Math.round(z)} m`;
+      
+      const label = this.makeTextPlane(labelText, "blue", labelSize);
+      if (label) {
+        // Z-axis in ROS becomes Y in Babylon (after rotation) - vertical positioning
+        label.position = new BABYLON.Vector3(0, z, 0); // Vertical position
+        label.rotation = new BABYLON.Vector3(0, 0, 0); // Keep upright, facing camera
+        this.gridUnitLabels.push(label);
+      }
+    }
+
+    this.gridUnitsVisible = true;
+  }
+
+  toggleGridUnits(unit: string) {
+    if (this.gridUnitsVisible && this.currentGridUnit === unit) {
+      // If current unit is visible, hide it
+      this.clearGridUnits();
+      this.gridUnitsVisible = false;
+    } else {
+      // Show the requested unit
+      this.createGridUnits(unit);
     }
   }
   
@@ -754,6 +865,7 @@ export class RobotScene {
     this.clearAxisGizmos();
     this.clearRotationGizmos();
     this.clearJointExerciseGizmos();
+    this.clearGridUnits();
     this.clearStatus();
 
     if (this.currentRobot) {
