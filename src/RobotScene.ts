@@ -648,6 +648,56 @@ export class RobotScene {
     this.gridUnitLabels = [];
   }
 
+  private createAxisLabels(
+    axis: 'x' | 'y' | 'z',
+    range: number,
+    increment: number,
+    unit: string,
+    labelSize: number,
+    color: string
+  ) {
+    // Define axis-specific configuration
+    const axisConfig = {
+      x: {
+        start: -range,
+        end: range,
+        skipOrigin: true,
+        getPosition: (value: number) => new BABYLON.Vector3(0, 0, value),
+        getRotation: () => new BABYLON.Vector3(-Math.PI/2, 0, 0)
+      },
+      y: {
+        start: -range,
+        end: range,
+        skipOrigin: true,
+        getPosition: (value: number) => new BABYLON.Vector3(-value, 0, 0),
+        getRotation: () => new BABYLON.Vector3(-Math.PI/2, Math.PI/2, 0)
+      },
+      z: {
+        start: increment,
+        end: range,
+        skipOrigin: false,
+        getPosition: (value: number) => new BABYLON.Vector3(0, value, 0),
+        getRotation: () => new BABYLON.Vector3(0, 0, 0)
+      }
+    };
+
+    const config = axisConfig[axis];
+    
+    for (let value = config.start; value <= config.end; value += increment) {
+      if (config.skipOrigin && Math.abs(value) < 0.001) continue;
+      
+      const labelText = unit === "10cm" ? `${Math.round(value * 100)} cm` : 
+                       `${Math.round(value)} m`;
+      
+      const label = this.makeTextPlane(labelText, color, labelSize);
+      if (label) {
+        label.position = config.getPosition(value);
+        label.rotation = config.getRotation();
+        this.gridUnitLabels.push(label);
+      }
+    }
+  }
+
   createGridUnits(unit: string) {
     if (!this.scene) {
       return;
@@ -674,51 +724,10 @@ export class RobotScene {
         break;
     }
 
-    // Create labels along X axis (red)
-    for (let x = -range; x <= range; x += increment) {
-      if (Math.abs(x) < 0.001) continue; // Skip origin
-      
-      const labelText = unit === "10cm" ? `${Math.round(x * 100)} cm` : 
-                       `${Math.round(x)} m`;
-      
-      const label = this.makeTextPlane(labelText, "red", labelSize);
-      if (label) {
-        // Convert to ROS coordinates: X points forward, Y points left, Z points up
-        label.position = new BABYLON.Vector3(0, 0, x); // X-axis in ROS becomes Z in Babylon (after rotation)
-        label.rotation = new BABYLON.Vector3(-Math.PI/2, 0, 0); // Rotate to lie flat on ground
-        this.gridUnitLabels.push(label);
-      }
-    }
-
-    // Create labels along Y axis (green)  
-    for (let y = -range; y <= range; y += increment) {
-      if (Math.abs(y) < 0.001) continue; // Skip origin
-      
-      const labelText = unit === "10cm" ? `${Math.round(y * 100)} cm` : 
-                       `${Math.round(y)} m`;
-      
-      const label = this.makeTextPlane(labelText, "green", labelSize);
-      if (label) {
-        // Convert to ROS coordinates: Y-axis in ROS becomes -X in Babylon (after rotation)
-        label.position = new BABYLON.Vector3(-y, 0, 0); // Y-axis in ROS becomes -X in Babylon (after rotation)
-        label.rotation = new BABYLON.Vector3(-Math.PI/2, Math.PI/2, 0); // Rotate to lie flat and face correct direction
-        this.gridUnitLabels.push(label);
-      }
-    }
-
-    // Create labels along Z axis (blue) - vertical height markers
-    for (let z = increment; z <= range; z += increment) { // Start from increment (skip origin and negative values)
-      const labelText = unit === "10cm" ? `${Math.round(z * 100)} cm` : 
-                       `${Math.round(z)} m`;
-      
-      const label = this.makeTextPlane(labelText, "blue", labelSize);
-      if (label) {
-        // Z-axis in ROS becomes Y in Babylon (after rotation) - vertical positioning
-        label.position = new BABYLON.Vector3(0, z, 0); // Vertical position
-        label.rotation = new BABYLON.Vector3(0, 0, 0); // Keep upright, facing camera
-        this.gridUnitLabels.push(label);
-      }
-    }
+    // Create labels for all axes using the helper function
+    this.createAxisLabels('x', range, increment, unit, labelSize, 'red');
+    this.createAxisLabels('y', range, increment, unit, labelSize, 'green');
+    this.createAxisLabels('z', range, increment, unit, labelSize, 'blue');
 
     this.gridUnitsVisible = true;
   }
