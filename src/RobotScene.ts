@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 Lou Amadio and Ranch Hand Robotics, LLC
+ * All rights reserved.
+ */
+
 import * as BABYLON from 'babylonjs';
 import * as Materials from 'babylonjs-materials';
 import * as urdf from './urdf';
@@ -45,6 +50,18 @@ export class RobotScene {
   private savedFramingRadius: number = 1;
   private savedFramingAlpha: number = -Math.PI / 3;
   private savedFramingBeta: number = 5 * Math.PI / 12;
+  
+  // Hamburger menu properties
+  private hamburgerButton: GUI.Button | undefined = undefined;
+  private menuPanel: GUI.StackPanel | undefined = undefined;
+  private menuScrollViewer: GUI.ScrollViewer | undefined = undefined;
+  private menuContainer: GUI.Rectangle | undefined = undefined;
+  private isMenuExpanded: boolean = false;
+  
+  // Grid units properties
+  private gridUnitsVisible: boolean = false;
+  private currentGridUnit: string = "1m"; // "10cm", "1m"
+  private gridUnitLabels: BABYLON.AbstractMesh[] = [];
       
 
   clearStatus() {
@@ -366,7 +383,7 @@ export class RobotScene {
   }
   
   createButton(toolbar: GUI.StackPanel, name : string, text : string, scene : BABYLON.Scene, onClick : () => void) {
-    var button = GUI.Button.CreateSimpleButton(name, text);
+    const button = GUI.Button.CreateSimpleButton(name, text);
     button.width = "100px";
     button.height = "20px";
     button.color = "white";
@@ -377,15 +394,180 @@ export class RobotScene {
     return button;
   }
 
+  createMenuButton(name : string, text : string, onClick : () => void) {
+    const button = GUI.Button.CreateSimpleButton(name, text);
+    button.widthInPixels = 120;
+    button.heightInPixels = 30;
+    button.color = "white";
+    button.cornerRadius = 5;
+    button.background = "green";
+    button.fontSize = "12px";
+    button.paddingTopInPixels = 4;
+    button.paddingBottomInPixels = 4;
+    button.onPointerUpObservable.add(onClick);
+    return button;
+  }
+
+  createHamburgerMenu() {
+    if (!this.UILayer) {
+      return;
+    }
+
+    // Create hamburger button
+    this.hamburgerButton = GUI.Button.CreateSimpleButton("hamburgerButton", "☰");
+    this.hamburgerButton.widthInPixels = 40;
+    this.hamburgerButton.heightInPixels = 40;
+    this.hamburgerButton.color = "white";
+    this.hamburgerButton.cornerRadius = 5;
+    this.hamburgerButton.background = "rgba(0, 0, 0, 0.8)";
+    this.hamburgerButton.fontSize = "20px";
+    this.hamburgerButton.fontWeight = "bold";
+    this.hamburgerButton.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    this.hamburgerButton.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    this.hamburgerButton.leftInPixels = 10;
+    this.hamburgerButton.topInPixels = 10;
+    
+    this.hamburgerButton.onPointerUpObservable.add(() => {
+      this.toggleMenu();
+    });
+    
+    this.UILayer.addControl(this.hamburgerButton);
+
+    // Create menu panel container
+    this.menuContainer = new GUI.Rectangle("menuContainer");
+    this.menuContainer.widthInPixels = 175;
+    this.menuContainer.heightInPixels = 400;
+    this.menuContainer.cornerRadius = 8;
+    this.menuContainer.color = "white";
+    this.menuContainer.thickness = 2;
+    this.menuContainer.background = "rgba(0, 0, 0, 0.6)";
+    this.menuContainer.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    this.menuContainer.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    this.menuContainer.leftInPixels = 10;
+    this.menuContainer.topInPixels = 60;
+    this.menuContainer.isVisible = false;
+    
+    this.UILayer.addControl(this.menuContainer);
+
+    // Create scroll viewer for the menu
+    this.menuScrollViewer = new GUI.ScrollViewer("menuScrollViewer");
+    this.menuScrollViewer.thickness = 0;
+    this.menuScrollViewer.color = "transparent";
+    this.menuScrollViewer.background = "transparent";
+    this.menuScrollViewer.widthInPixels = 175;
+    this.menuScrollViewer.heightInPixels = 400;
+    this.menuScrollViewer.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    
+    this.menuContainer.addControl(this.menuScrollViewer);
+
+    // Create the menu panel (vertical stack)
+    this.menuPanel = new GUI.StackPanel("menuPanel");
+    this.menuPanel.isVertical = true;
+    this.menuPanel.spacing = 5;
+    this.menuPanel.paddingTopInPixels = 10;
+    this.menuPanel.paddingBottomInPixels = 10;
+    this.menuPanel.paddingLeftInPixels = 5;
+    this.menuPanel.paddingRightInPixels = 5;
+    
+    this.menuScrollViewer.addControl(this.menuPanel);
+
+    // Add all the menu buttons
+    this.createMenuButtons();
+  }
+
+  createMenuButtons() {
+    if (!this.menuPanel || !this.scene || !this.utilLayer) {
+      return;
+    }
+
+    // Add all the buttons to the menu
+    const jointAxisButton = this.createMenuButton("jointAxisButton", "Joint Axis", () => {
+      this.toggleAxisOnRobot(true, this.scene, this.utilLayer!);
+    });
+    this.menuPanel.addControl(jointAxisButton);
+
+    const linkAxisButton = this.createMenuButton("linkAxisButton", "Link Axis", () => {
+      this.toggleAxisOnRobot(false, this.scene, this.utilLayer!);
+    });
+    this.menuPanel.addControl(linkAxisButton);
+
+    const jointRotationButton = this.createMenuButton("jointRotationButton", "Joint Rotation", () => {
+      this.toggleAxisRotationOnRobot(true, this.UILayer, this.scene, this.utilLayer!);
+    });
+    this.menuPanel.addControl(jointRotationButton);
+
+    const linkRotationButton = this.createMenuButton("linkRotationButton", "Link Rotation", () => {
+      this.toggleAxisRotationOnRobot(false, this.UILayer, this.scene, this.utilLayer!);
+    });
+    this.menuPanel.addControl(linkRotationButton);
+
+    const worldAxisButton = this.createMenuButton("worldAxis", "World Axis", () => {
+      this.toggleWorldAxis();
+    });
+    this.menuPanel.addControl(worldAxisButton);
+
+    const collisionButton = this.createMenuButton("collision", "Collision", () => {
+      this.toggleCollision();
+    });
+    this.menuPanel.addControl(collisionButton);
+
+    const visualsButton = this.createMenuButton("visuals", "Visuals", () => {
+      this.toggleVisuals();
+    });
+    this.menuPanel.addControl(visualsButton);
+
+    const boundingBoxButton = this.createMenuButton("boundingBoxes", "Bounding Boxes", () => {
+      this.toggleBoundingBoxes();
+    });
+    this.menuPanel.addControl(boundingBoxButton);
+
+    const resetCameraButton = this.createMenuButton("resetCamera", "Reset Camera", () => {
+      this.resetCamera();
+    });
+    this.menuPanel.addControl(resetCameraButton);
+
+    const resetButton = this.createMenuButton("reset", "Reset Robot", () => {
+      if (this.currentURDF !== undefined) {
+        this.applyURDF(this.currentURDF);
+      }
+    });
+    this.menuPanel.addControl(resetButton);
+
+    // Grid unit buttons
+    const gridUnits10cmButton = this.createMenuButton("gridUnits10cm", "Grid: 10cm", () => {
+      this.toggleGridUnits("10cm");
+    });
+    this.menuPanel.addControl(gridUnits10cmButton);
+
+    const gridUnits1mButton = this.createMenuButton("gridUnits1m", "Grid: 1m", () => {
+      this.toggleGridUnits("1m");
+    });
+    this.menuPanel.addControl(gridUnits1mButton);
+  }
+
+  toggleMenu() {
+    this.isMenuExpanded = !this.isMenuExpanded;
+    if (this.menuContainer) {
+      this.menuContainer.isVisible = this.isMenuExpanded;
+    }
+    
+    // Update hamburger button icon
+    if (this.hamburgerButton) {
+      this.hamburgerButton.textBlock!.text = this.isMenuExpanded ? "✕" : "☰";
+    }
+  }
+
 
   makeTextPlane(text : string, color : string, size : number) {
     if (!this.scene) {
       return;
     }
 
-    var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", 50, this.scene, true);
+    // Use larger texture size for better text quality and to prevent clipping
+    var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", 128, this.scene, true);
     dynamicTexture.hasAlpha = true;
-    dynamicTexture.drawText(text, 5, 40, "bold 36px Arial", color, "transparent", true);
+    // Center the text and use appropriate font size
+    dynamicTexture.drawText(text, null, null, "bold 36px Arial", color, "transparent", true);
     var plane = BABYLON.MeshBuilder.CreatePlane("TextPlane", {size: size}, this.scene);
     let material = new BABYLON.StandardMaterial("TextPlaneMaterial", this.scene);
     material.backFaceCulling = false;
@@ -458,6 +640,108 @@ export class RobotScene {
       }
     }
   }
+
+  clearGridUnits() {
+    this.gridUnitLabels.forEach((label) => {
+      label.dispose();
+    });
+    this.gridUnitLabels = [];
+  }
+
+  private createAxisLabels(
+    axis: 'x' | 'y' | 'z',
+    range: number,
+    increment: number,
+    unit: string,
+    labelSize: number,
+    color: string
+  ) {
+    // Define axis-specific configuration
+    const axisConfig = {
+      x: {
+        start: -range,
+        end: range,
+        skipOrigin: true,
+        getPosition: (value: number) => new BABYLON.Vector3(0, 0, value),
+        getRotation: () => new BABYLON.Vector3(-Math.PI/2, 0, 0)
+      },
+      y: {
+        start: -range,
+        end: range,
+        skipOrigin: true,
+        getPosition: (value: number) => new BABYLON.Vector3(-value, 0, 0),
+        getRotation: () => new BABYLON.Vector3(-Math.PI/2, Math.PI/2, 0)
+      },
+      z: {
+        start: increment,
+        end: range,
+        skipOrigin: false,
+        getPosition: (value: number) => new BABYLON.Vector3(0, value, 0),
+        getRotation: () => new BABYLON.Vector3(0, 0, 0)
+      }
+    };
+
+    const config = axisConfig[axis];
+    
+    for (let value = config.start; value <= config.end; value += increment) {
+      if (config.skipOrigin && Math.abs(value) < 0.001) continue;
+      
+      const labelText = unit === "10cm" ? `${Math.round(value * 100)} cm` : 
+                       `${Math.round(value)} m`;
+      
+      const label = this.makeTextPlane(labelText, color, labelSize);
+      if (label) {
+        label.position = config.getPosition(value);
+        label.rotation = config.getRotation();
+        this.gridUnitLabels.push(label);
+      }
+    }
+  }
+
+  createGridUnits(unit: string) {
+    if (!this.scene) {
+      return;
+    }
+
+    this.clearGridUnits();
+    this.currentGridUnit = unit;
+
+    let increment: number;
+    let range: number;
+    let labelSize: number;
+    
+    switch (unit) {
+      case "10cm":
+        increment = 0.1; // 10cm in meters
+        range = 5; // Show up to 5 meters in each direction
+        labelSize = 0.1; // Increased size for better visibility
+        break;
+      case "1m":
+      default:
+        increment = 1; // 1 meter
+        range = 25; // Show up to 25 meters in each direction
+        labelSize = 0.3; // Increased size for better visibility
+        break;
+    }
+
+    // Create labels for all axes using the helper function
+    this.createAxisLabels('x', range, increment, unit, labelSize, 'red');
+    this.createAxisLabels('y', range, increment, unit, labelSize, 'green');
+    this.createAxisLabels('z', range, increment, unit, labelSize, 'blue');
+
+    this.gridUnitsVisible = true;
+  }
+
+  toggleGridUnits(unit: string) {
+    if (this.gridUnitsVisible && this.currentGridUnit === unit) {
+      // If current unit is visible, hide it
+      this.clearGridUnits();
+      this.gridUnitsVisible = false;
+    } else {
+      // Show the requested unit
+      this.createGridUnits(unit);
+    }
+  }
   
   
   createUI() {
@@ -475,17 +759,6 @@ export class RobotScene {
     this.statusLabel.outlineWidth = 2.0;
     this.UILayer.addControl(this.statusLabel);
   
-    var toolbar = new GUI.StackPanel();
-    toolbar.paddingTop = "10px";
-    toolbar.paddingLeft = "10px";
-    toolbar.width = "100%";
-    toolbar.height = "50px";
-    toolbar.fontSize = "14px";
-    toolbar.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-    toolbar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    toolbar.isVertical = false;
-    this.UILayer.addControl(toolbar);
-  
     // Create a utility layer with specific settings to ensure gizmo visibility
     this.utilLayer = new BABYLON.UtilityLayerRenderer(this.scene);
     //this.utilLayer.utilityLayerScene.autoClearDepthAndStencil = false; // Helps with depth sorting
@@ -498,40 +771,9 @@ export class RobotScene {
     gizmoManager.rotationGizmoEnabled = true;
     
     this.createWorldAxis();
-  
-    this.createButton(toolbar, "jointAxisButton", "Joint Axis", this.scene, () => {
-      this.toggleAxisOnRobot(true, this.scene, this.utilLayer!);
-    });
-  
-    this.createButton(toolbar, "linkAxisButton", "Link Axis", this.scene, () => {
-      this.toggleAxisOnRobot(false, this.scene, this.utilLayer!);
-    });
-  
-    this.createButton(toolbar, "jointRotationButton", "Joint Rotation", this.scene, () => {  
-      this.toggleAxisRotationOnRobot(true, this.UILayer, this.scene, this.utilLayer!);
-    });
-  
-    this.createButton(toolbar, "linkRotationButton", "Link Rotation", this.scene, () => {  
-      this.toggleAxisRotationOnRobot(false, this.UILayer, this.scene, this.utilLayer!);
-    });
-
-    this.createButton(toolbar, "worldAxis", "World Axis", this.scene, () => {  
-      this.toggleWorldAxis();
-    });
-
-    this.createButton(toolbar, "collision", "Collision", this.scene, () => {  
-      this.toggleCollision();
-    });
-
-    this.createButton(toolbar, "visuals", "Visuals", this.scene, () => {  
-      this.toggleVisuals();
-    });
-
-    this.createButton(toolbar, "reset", "Reset", this.scene, () => {  
-      if (this.currentURDF !== undefined) {
-        this.applyURDF(this.currentURDF);
-      }
-    });
+    
+    // Create hamburger menu system
+    this.createHamburgerMenu();
 
     let that = this;
     this.scene.onPointerDown = function castRay() {
@@ -632,6 +874,7 @@ export class RobotScene {
     this.clearAxisGizmos();
     this.clearRotationGizmos();
     this.clearJointExerciseGizmos();
+    this.clearGridUnits();
     this.clearStatus();
 
     if (this.currentRobot) {

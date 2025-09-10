@@ -2,7 +2,29 @@
 
 ## Overview
 
-Babylon_ROS is a Node.JS API for rendering ROS 2 based URDFs and Xacro in a web browser using Babylon.js 3D.
+Babylon_ros is a Node.JS API for rendering [ROS 2](https://ros.org) based URDFs and Xacro in a web browser or Visual Studio Code compatible extension using [the Babylon.js graphics engine](https://www.babylonjs.com/).
+
+
+<div align="center">
+  
+[![Mule Robot Demo](https://img.shields.io/badge/🤖_Interactive_Demo-View_3D_Robot-blue?style=for-the-badge&logo=github)](https://ranch-hand-robotics.github.io/babylon_ros/docs/urdf-viewer.html?urdf=https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/mule.urdf)
+
+</div>
+
+### Universal URDF Viewer
+
+The generic URDF viewer accepts any URDF or Xacro file via URL parameters:
+
+```
+https://ranch-hand-robotics.github.io/babylon_ros/docs/urdf-viewer.html?urdf=YOUR_URDF_URL
+```
+
+**Example URLs:**
+- **Mule Robot**: `https://ranch-hand-robotics.github.io/babylon_ros/docs/urdf-viewer.html?urdf=https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/mule.urdf`
+- **R2 Robot**: `https://ranch-hand-robotics.github.io/babylon_ros/docs/urdf-viewer.html?urdf=https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/r2.urdf`
+
+This makes it easy to embed live robot visualizations in any README by simply linking to the viewer with your URDF file URL.
+
 
 ## Features
 
@@ -16,10 +38,10 @@ Babylon_ROS is a Node.JS API for rendering ROS 2 based URDFs and Xacro in a web 
 - **No Sensor visualization**: The package does not simulate or visualize sensors.
 
 ## Installation
-Babylon ROS is an npm package that can be installed in your web application. To install, run:
+Babylon_ros is available via the [Node Package Manager](https://npmjs.com) package that can be installed in your web application. To install, run:
 
 ```bash
-npm install --save @polyhobbyist/babylon_ros
+npm install --save @ranchhandrobotics/babylon_ros
 ```
 
 ## Usage
@@ -64,31 +86,20 @@ Here’s a simple example which renders a the Test Page included in this package
 </body>
 </html>
 ```
-To use your own hosting application, I suggest looking at how the Test Page is implemented in the `test` directory.
-
-## Screenshot API
-
-The library includes built-in screenshot functionality to capture clean images of your robot scenes:
-
-```javascript
-// Take a screenshot and get base64 PNG data
-const base64Data = await robotScene.takeScreenshot();
-
-// Take a screenshot with custom dimensions
-const base64Data = await robotScene.takeScreenshot(1920, 1080);
-
-// Get a data URL for immediate use
-const dataUrl = await robotScene.takeScreenshotDataURL();
-
-// Save screenshot as file (browser)
-const link = document.createElement('a');
-link.href = `data:image/png;base64,${base64Data}`;
-link.download = 'robot_scene.png';
-link.click();
-```
-
-The screenshot API automatically hides UI elements (buttons, gizmos, etc.) during capture, ensuring clean robot visualizations. See [SCREENSHOT_API.md](./SCREENSHOT_API.md) for complete documentation.
 
 ## Support
-Support is available through the [GitHub Discussion at Ranch Hand Robotics](https://github.com/orgs/Ranch-Hand-Robotics/discussions).
+If you encounter any issues with this package, the following resources are provided:
+
+### Github Issues
+Bugs and feature requests are handled through [Github Issues in the Repository](https://github.com/Ranch-Hand-Robotics/babylon_ros/issues). 
+
+If you find that you are hitting the same issue as someone else, please give a :+1: or comment on an existing issue.
+
+Please provide as much details as possible, including an isolated reproduction of the issue or a pointer to an online repository.
+
+### Discussions
+[Github Discussions](https://github.com/orgs/Ranch-Hand-Robotics/discussions) are provided for community driven general guidance, walkthroughs, or support.
+
+## Sponsor
+If you find this package useful, please consider [sponsoring Ranch Hand Robotics](https://github.com/sponsors/Ranch-Hand-Robotics) to help support the development of this package and other open source projects.
 

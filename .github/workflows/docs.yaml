@@ -1,0 +1,25 @@
+name: Publish docs via GitHub Pages
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Deploy docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: cp -r ./web/ros.js ./docs/ros.js
+      - name: Deploy docs
+        run: |
+          sudo apt-get install -y python3-pip
+          pip3 install mkdocs
+          pip3 install pymdown-extensions
+          mkdocs gh-deploy --force

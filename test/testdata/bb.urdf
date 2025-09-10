@@ -8,7 +8,7 @@
   <link name="base_link">
     <visual>
       <geometry>
-        <mesh filename="https://raw.githubusercontent.com/polyhobbyist/bb_description/main/meshes/dome.stl" scale="0.00001 0.00001 0.00001" />
+        <mesh filename="https://raw.githubusercontent.com/Ranch-Hand-Robotics/bb_description/main/meshes/dome.stl" scale="0.00001 0.00001 0.00001" />
       </geometry>
     </visual>
   </link>

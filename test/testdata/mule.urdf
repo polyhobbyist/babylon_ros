@@ -12,7 +12,7 @@
             <visual>
                 <origin xyz="0 0 -0.127" rpy="0 0 1.5707963267948966"/>
                 <geometry>
-                  <mesh filename="https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/hf_wheel.stl"/>
+                  <mesh filename="https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/hf_wheel.stl"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
@@ -35,13 +35,13 @@
         <joint name="left_front_wheel" type="continuous">
             <parent link="base_link"/>
             <child link="left_front_wheel_link"/><origin xyz="0.33345 -0.2793999999999999 0" rpy="0 0 0"/>
-            <axis xyz="0 1 0"/>
+            <axis xyz="1 0 0"/>
         </joint>
         <link name="left_mid_wheel_link">
             <visual>
                 <origin xyz="0 0 -0.127" rpy="0 0 1.5707963267948966"/>
                 <geometry>
-                  <mesh filename="https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/hf_wheel.stl"/>
+                  <mesh filename="https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/hf_wheel.stl"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
@@ -64,13 +64,13 @@
         <joint name="left_mid_wheel" type="continuous">
             <parent link="base_link"/>
             <child link="left_mid_wheel_link"/><origin xyz="0.33345 0.006350000000000022 0" rpy="0 0 0"/>
-            <axis xyz="0 1 0"/>
+            <axis xyz="1 0 0"/>
         </joint>
         <link name="left_rear_wheel_link">
             <visual>
                 <origin xyz="0 0 -0.127" rpy="0 0 1.5707963267948966"/>
                 <geometry>
-                  <mesh filename="https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/hf_wheel.stl"/>
+                  <mesh filename="https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/hf_wheel.stl"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
@@ -93,13 +93,13 @@
         <joint name="left_rear_wheel" type="continuous">
             <parent link="base_link"/>
             <child link="left_rear_wheel_link"/><origin xyz="0.33345 0.2921 0" rpy="0 0 0"/>
-            <axis xyz="0 1 0"/>
+            <axis xyz="1 0 0"/>
         </joint>
         <link name="right_front_wheel_link">
             <visual>
                 <origin xyz="0 0 -0.127" rpy="0 0 1.5707963267948966"/>
                 <geometry>
-                  <mesh filename="https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/hf_wheel.stl"/>
+                  <mesh filename="https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/hf_wheel.stl"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
@@ -122,13 +122,13 @@
         <joint name="right_front_wheel" type="continuous">
             <parent link="base_link"/>
             <child link="right_front_wheel_link"/><origin xyz="-0.33345 -0.2793999999999999 0" rpy="0 0 3.1415926535897931"/>
-            <axis xyz="0 1 0"/>
+            <axis xyz="1 0 0"/>
         </joint>
         <link name="right_mid_wheel_link">
             <visual>
                 <origin xyz="0 0 -0.127" rpy="0 0 1.5707963267948966"/>
                 <geometry>
-                  <mesh filename="https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/hf_wheel.stl"/>
+                  <mesh filename="https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/hf_wheel.stl"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
@@ -151,13 +151,13 @@
         <joint name="right_mid_wheel" type="continuous">
             <parent link="base_link"/>
             <child link="right_mid_wheel_link"/><origin xyz="-0.33345 0.006350000000000022 0" rpy="0 0 3.1415926535897931"/>
-            <axis xyz="0 1 0"/>
+            <axis xyz="1 0 0"/>
         </joint>
         <link name="right_rear_wheel_link">
             <visual>
                 <origin xyz="0 0 -0.127" rpy="0 0 1.5707963267948966"/>
                 <geometry>
-                  <mesh filename="https://raw.githubusercontent.com/polyhobbyist/babylon_ros/main/test/testdata/hf_wheel.stl"/>
+                  <mesh filename="https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/hf_wheel.stl"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
@@ -180,7 +180,7 @@
         <joint name="right_rear_wheel" type="continuous">
             <parent link="base_link"/>
             <child link="right_rear_wheel_link"/><origin xyz="-0.33345 0.2921 0" rpy="0 0 3.1415926535897931"/>
-            <axis xyz="0 1 0"/>
+            <axis xyz="1 0 0"/>
         </joint>
     
 

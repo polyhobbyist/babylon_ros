@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URDF Viewer - babylon_ros</title>
+    <style>
+        html, body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            display: block;
+        }
+        #controls {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            z-index: 100;
+            font-size: 13px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        #controls h4 {
+            margin: 0 0 10px 0;
+            font-size: 15px;
+            color: #fff;
+        }
+        #controls .robot-info {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+        button {
+            margin: 3px;
+            padding: 6px 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:active {
+            transform: translateY(1px);
+        }
+        #loading {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            text-align: center;
+            z-index: 200;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+        #loading .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(220, 53, 69, 0.95);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            z-index: 200;
+            max-width: 500px;
+            display: none;
+        }
+        .hidden {
+            display: none !important;
+        }
+        #urlInfo {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            max-width: 300px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas" touch-action="none"></canvas>
+    
+    <div id="loading">
+        <div class="spinner"></div>
+        <div style="font-size: 18px; margin-bottom: 8px;">Loading Robot...</div>
+        <div id="loadingUrl" style="font-size: 12px; opacity: 0.8;"></div>
+        <div style="font-size: 10px; margin-top: 10px; opacity: 0.6;">Powered by babylon_ros</div>
+    </div>
+    
+    <div id="error">
+        <h3>❌ Failed to Load Robot</h3>
+        <div id="errorMessage"></div>
+        <div style="margin-top: 15px; font-size: 12px;">
+            <strong>Common issues:</strong><br>
+            • URDF file not found or inaccessible<br>
+            • CORS restrictions on the server<br>
+            • Invalid URDF format<br>
+            • Network connectivity issues
+        </div>
+    </div>
+    
+    <div id="controls" class="hidden">
+        <h4 id="robotName">🤖 Robot Viewer</h4>
+        <div class="robot-info" id="robotInfo"></div>
+    </div>
+
+    <div id="urlInfo">
+        <strong>URDF:</strong> <span id="currentUrl">No URL specified</span>
+    </div>
+
+    <script>
+        // Try multiple script loading strategies
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = () => {
+                    console.log('✅ Script loaded successfully:', src);
+                    resolve();
+                };
+                script.onerror = () => {
+                    console.error('❌ Failed to load script:', src);
+                    reject(new Error(`Failed to load ${src}`));
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        // Try different paths for ros.js
+        async function loadRosScript() {
+            const possiblePaths = [
+                'ros.js',           // Current directory
+                './ros.js',         // Explicit current directory  
+                '../ros.js',        // Parent directory
+                '/ros.js',          // Root
+                window.location.pathname.replace(/\/[^\/]*$/, '/ros.js') // Calculated path
+            ];
+
+            for (const path of possiblePaths) {
+                try {
+                    console.log('🔄 Trying to load ros.js from:', path);
+                    await loadScript(path);
+                    console.log('✅ Successfully loaded ros.js from:', path);
+                    return;
+                } catch (error) {
+                    console.log('❌ Failed to load from:', path);
+                    continue;
+                }
+            }
+
+            // If all paths fail, show error
+            showError(`Failed to load ros.js from any of these paths:\n${possiblePaths.map(p => `• ${p}`).join('\n')}\n\nPossible issues:\n• File doesn't exist or isn't accessible\n• CORS policy restrictions\n• Server not serving JavaScript files properly\n• Network connectivity issues\n\nPlease check:\n• Developer tools Network tab for errors\n• That ros.js exists in the same directory as this HTML file\n• That your web server is configured to serve .js files`);
+        }
+
+        // Start loading the script
+        loadRosScript();
+    </script>
+
+    <script>
+        let robotScene;
+        let isWireframe = false;
+
+        // Parse URL parameters
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Get robot name from URL or filename
+        function extractRobotName(url) {
+            if (!url) return 'Unknown Robot';
+            const filename = url.split('/').pop();
+            const name = filename.replace('.urdf', '').replace(/[_-]/g, ' ');
+            return name.charAt(0).toUpperCase() + name.slice(1);
+        }
+
+        // Main function to load robot
+        async function loadRobot() {
+            try {
+                // Get URDF URL from query parameter
+                const urdfUrl = getUrlParameter('urdf') || getUrlParameter('url') || getUrlParameter('file');
+                
+                if (!urdfUrl) {
+                    throw new Error('No URDF URL specified. Add ?urdf=YOUR_URDF_URL to the page URL.');
+                }
+
+                // Update UI with URL info
+                document.getElementById('currentUrl').textContent = urdfUrl;
+                document.getElementById('loadingUrl').textContent = `Fetching: ${urdfUrl}`;
+
+                // Fetch the URDF file
+                const response = await fetch(urdfUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const urdfText = await response.text();
+
+                // Create the robot scene
+                const canvas = document.getElementById('renderCanvas');
+                robotScene = new babylon_ros.RobotScene();
+                await robotScene.createScene(canvas);
+                
+                // Load and render the URDF
+                await robotScene.applyURDF(urdfText);
+                robotScene.createUI();
+                robotScene.engine.runRenderLoop(function () {
+                    if (robotScene !== undefined && robotScene.scene !== undefined) {
+                    robotScene.scene.render();
+                    }
+                });
+                
+                robotScene.engine.resize();
+                
+                window.addEventListener("resize", function () {
+                    if (robotScene !== undefined && robotScene.engine !== undefined) {
+                    robotScene.engine.resize();
+                    }
+                });  
+                
+                // Update UI
+                const robotName = extractRobotName(urdfUrl);
+                document.getElementById('robotName').textContent = `🤖 ${robotName}`;
+                document.getElementById('robotInfo').textContent = `Loaded from: ${new URL(urdfUrl).hostname}`;
+                
+                // Hide loading, show controls
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('controls').classList.remove('hidden');
+                
+                console.log('✅ Robot loaded successfully:', robotName);
+                
+            } catch (error) {
+                console.error('❌ Error loading robot:', error);
+                showError(error.message);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+
+        // Wait for all scripts to load before initializing
+        let scriptCheckAttempts = 0;
+        const maxAttempts = 20; // 10 seconds max wait
+        
+        function waitForScripts() {
+            scriptCheckAttempts++;
+            console.log(`🔍 Checking script availability (attempt ${scriptCheckAttempts}/${maxAttempts}):`, {
+                BABYLON: typeof BABYLON,
+                babylon_ros: typeof babylon_ros,
+                window_BABYLON: typeof window.BABYLON,
+                window_babylon_ros: typeof window.babylon_ros
+            });
+            
+            // Check if babylon_ros is available (it should contain BABYLON)
+            if (typeof babylon_ros !== 'undefined' || typeof window.babylon_ros !== 'undefined') {
+                console.log('✅ babylon_ros loaded, initializing robot...');
+                loadRobot();
+            } else if (scriptCheckAttempts >= maxAttempts) {
+                console.error('❌ Timeout waiting for scripts to load');
+                showError(`Scripts failed to load after ${maxAttempts/2} seconds.\n\nPossible issues:\n• ros.js file not found or not accessible\n• CORS policy blocking script execution\n• JavaScript file corrupted or invalid\n• Server not configured to serve .js files\n\nDebugging info:\n• Current URL: ${window.location.href}\n• Expected script path: ${window.location.origin}${window.location.pathname.replace(/\/[^\/]*$/, '')}/ros.js\n• Available globals: ${Object.getOwnPropertyNames(window).filter(name => name.toLowerCase().includes('babylon')).join(', ') || 'none'}`);
+            } else {
+                console.log('⏳ Waiting for scripts to load...');
+                setTimeout(waitForScripts, 500);
+            }
+        }
+
+        // Start checking when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', waitForScripts);
+        } else {
+            waitForScripts();
+        }
+    </script>
+</body>
+</html>

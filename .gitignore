@@ -1,6 +1,9 @@
 web/*.js*
+docs/ros.js
+docs/ros.js.map
+
 web/user/**
-.vscode/*.db
+.vscode/*.db*
 **/log
 # Logs
 logs

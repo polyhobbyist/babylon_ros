@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 Lou Amadio and Ranch Hand Robotics, LLC
+ * All rights reserved.
+ */
+
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import * as BABYLON from 'babylonjs';
