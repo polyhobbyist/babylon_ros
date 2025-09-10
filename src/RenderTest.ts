@@ -17,25 +17,125 @@ import * as ColladaFileLoader from '@polyhobbyist/babylon-collada-loader';
 
 let currentRobotScene : RobotScene | undefined = undefined;
 
+// Test menu state variables
+let testMenuButton: GUI.Button | undefined = undefined;
+let testMenuPanel: GUI.StackPanel | undefined = undefined;
+let testMenuScrollViewer: GUI.ScrollViewer | undefined = undefined;
+let isTestMenuExpanded: boolean = false;
+let testMenuContainer: GUI.Rectangle | undefined = undefined;
+
+function createTestMenuButton(name: string, text: string, onClick: () => void): GUI.Button {
+  var button = GUI.Button.CreateSimpleButton(name, text);
+  button.widthInPixels = 200;
+  button.heightInPixels = 28;
+  button.color = "white";
+  button.cornerRadius = 4;
+  button.background = "rgba(0, 120, 215, 0.8)";
+  button.fontSize = "11px";
+  button.paddingTopInPixels = 3;
+  button.paddingBottomInPixels = 3;
+  button.onPointerUpObservable.add(onClick);
+  return button;
+}
+
+function createTestGroupHeader(text: string): GUI.TextBlock {
+  const header = new GUI.TextBlock();
+  header.text = text;
+  header.color = "white";
+  header.fontSize = "14px";
+  header.fontWeight = "bold";
+  header.heightInPixels = 25;
+  header.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+  header.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+  return header;
+}
+
+function createTestGroupSeparator(): GUI.Rectangle {
+  const separator = new GUI.Rectangle();
+  separator.widthInPixels = 160;
+  separator.heightInPixels = 1;
+  separator.color = "rgba(255, 255, 255, 0.3)";
+  separator.background = "rgba(255, 255, 255, 0.3)";
+  separator.thickness = 0;
+  return separator;
+}
+
+function toggleTestMenu() {
+  isTestMenuExpanded = !isTestMenuExpanded;
+  
+  if (testMenuContainer) {
+    testMenuContainer.isVisible = isTestMenuExpanded;
+  }
+  
+  // Update hamburger button text
+  if (testMenuButton) {
+    testMenuButton.textBlock!.text = isTestMenuExpanded ? "✕" : "Tests";
+  }
+}
+
 function addTestToRobotScene(robotScene : RobotScene) {
   if (robotScene.UILayer === undefined) {
     return
   }
 
-  var testSelection = new GUI.SelectionPanel("tests");
-  testSelection.color = "white";
-  testSelection.width = 0.25;
-  testSelection.height = .75;
-  testSelection.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-  testSelection.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+  // Create hamburger-style test menu button
+  testMenuButton = GUI.Button.CreateSimpleButton("testMenuButton", "Tests");
+  testMenuButton.widthInPixels = 60;
+  testMenuButton.heightInPixels = 40;
+  testMenuButton.color = "white";
+  testMenuButton.cornerRadius = 5;
+  testMenuButton.background = "rgba(0, 0, 0, 0.8)";
+  testMenuButton.fontSize = "12px";
+  testMenuButton.fontWeight = "bold";
+  testMenuButton.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+  testMenuButton.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+  testMenuButton.leftInPixels = -10;
+  testMenuButton.topInPixels = 10;
+  
+  testMenuButton.onPointerUpObservable.add(() => {
+    toggleTestMenu();
+  });
+  
+  robotScene.UILayer.addControl(testMenuButton);
 
-  robotScene.UILayer.addControl(testSelection);
+  // Create menu panel container
+  testMenuContainer = new GUI.Rectangle("testMenuContainer");
+  testMenuContainer.widthInPixels = 250;
+  testMenuContainer.height = "80%";
+  testMenuContainer.cornerRadius = 8;
+  testMenuContainer.color = "white";
+  testMenuContainer.thickness = 2;
+  testMenuContainer.background = "rgba(0, 0, 0, 0.9)";
+  testMenuContainer.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+  testMenuContainer.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+  testMenuContainer.leftInPixels = -10;
+  testMenuContainer.isVisible = false;
+  
+  robotScene.UILayer.addControl(testMenuContainer);
 
-  var basicGroup = new GUI.RadioGroup("Basic Tests");
-  testSelection.addGroup(basicGroup);
+  // Create scroll viewer for the menu
+  testMenuScrollViewer = new GUI.ScrollViewer("testMenuScrollViewer");
+  testMenuScrollViewer.thickness = 0;
+  testMenuScrollViewer.color = "transparent";
+  testMenuScrollViewer.background = "transparent";
+  testMenuScrollViewer.widthInPixels = 240;
+  testMenuScrollViewer.height = "95%";
+  testMenuScrollViewer.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+  
+  testMenuContainer.addControl(testMenuScrollViewer);
 
-  basicGroup.groupPanel.color = "white";
+  // Create the menu panel (vertical stack)
+  testMenuPanel = new GUI.StackPanel("testMenuPanel");
+  testMenuPanel.isVertical = true;
+  testMenuPanel.spacing = 3;
+  testMenuPanel.paddingTopInPixels = 10;
+  testMenuPanel.paddingBottomInPixels = 10;
+  testMenuPanel.paddingLeftInPixels = 10;
+  testMenuPanel.paddingRightInPixels = 10;
+  
+  testMenuScrollViewer.addControl(testMenuPanel);
 
+  // Test data
   var basicTestList = [ 
     {name: "Basic", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/basic.urdf"},
     {name: "Basic Joint", url: "https://raw.githubusercontent.com/Ranch-Hand-Robotics/babylon_ros/main/test/testdata/basic_with_joint.urdf"},
@@ -59,22 +159,44 @@ function addTestToRobotScene(robotScene : RobotScene) {
     {name: "inline", url: ""},
   ];
 
+  // Add Basic Tests group
+  const basicTestsHeader = createTestGroupHeader("Basic Tests");
+  testMenuPanel.addControl(basicTestsHeader);
+  
+  const basicTestsSeparator = createTestGroupSeparator();
+  testMenuPanel.addControl(basicTestsSeparator);
+
   basicTestList.forEach((t) => {
-    basicGroup.addRadio(t.name, async () => {
+    const button = createTestMenuButton(t.name, t.name, async () => {
+      toggleTestMenu(); // Close menu after selection
       const response = await fetch(t.url);
       const urdfText = await response.text();
-      
       robotScene.applyURDF(urdfText);
     });
+    if (testMenuPanel) {
+      testMenuPanel.addControl(button);
+    }
   });
-  
-  var robotTestGroup = new GUI.RadioGroup("Robot Tests");
-  testSelection.addGroup(robotTestGroup);
 
-  robotTestGroup.groupPanel.color = "white";
+  // Add some spacing between groups
+  const spacer1 = new GUI.Rectangle();
+  spacer1.heightInPixels = 15;
+  spacer1.color = "transparent";
+  spacer1.background = "transparent";
+  spacer1.thickness = 0;
+  testMenuPanel.addControl(spacer1);
+
+  // Add Robot Tests group
+  const robotTestsHeader = createTestGroupHeader("Robot Tests");
+  testMenuPanel.addControl(robotTestsHeader);
+  
+  const robotTestsSeparator = createTestGroupSeparator();
+  testMenuPanel.addControl(robotTestsSeparator);
 
   robotTestList.forEach((t) => {
-    robotTestGroup.addRadio(t.name, async () => {
+    const button = createTestMenuButton(t.name, t.name, async () => {
+      toggleTestMenu(); // Close menu after selection
+      
       if (t.name === "inline") {
         const inlineURDF = `<?xml version="1.0"?>
 <robot name="planar_joint_example">
@@ -142,22 +264,12 @@ function addTestToRobotScene(robotScene : RobotScene) {
       
       const response = await fetch(t.url);
       const urdfText = await response.text();
-
       robotScene.applyURDF(urdfText);
     });
-  });
-
-  // Recursively set the color to white
-  function setControlColor(control : GUI.Control) {
-    control.color = "white";
-    if (control instanceof GUI.Container) {
-      control.children.forEach((c) => {
-        setControlColor(c);
-      });
+    if (testMenuPanel) {
+      testMenuPanel.addControl(button);
     }
-  }
-
-  setControlColor(testSelection);
+  });
 }
 
 // Main function that gets executed once the webview DOM loads
