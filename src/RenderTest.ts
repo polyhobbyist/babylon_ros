@@ -25,7 +25,7 @@ let isTestMenuExpanded: boolean = false;
 let testMenuContainer: GUI.Rectangle | undefined = undefined;
 
 function createTestMenuButton(name: string, text: string, onClick: () => void): GUI.Button {
-  var button = GUI.Button.CreateSimpleButton(name, text);
+  const button = GUI.Button.CreateSimpleButton(name, text);
   button.widthInPixels = 200;
   button.heightInPixels = 28;
   button.color = "white";

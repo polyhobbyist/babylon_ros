@@ -55,6 +55,7 @@ export class RobotScene {
   private hamburgerButton: GUI.Button | undefined = undefined;
   private menuPanel: GUI.StackPanel | undefined = undefined;
   private menuScrollViewer: GUI.ScrollViewer | undefined = undefined;
+  private menuContainer: GUI.Rectangle | undefined = undefined;
   private isMenuExpanded: boolean = false;
       
 
@@ -377,7 +378,7 @@ export class RobotScene {
   }
   
   createButton(toolbar: GUI.StackPanel, name : string, text : string, scene : BABYLON.Scene, onClick : () => void) {
-    var button = GUI.Button.CreateSimpleButton(name, text);
+    const button = GUI.Button.CreateSimpleButton(name, text);
     button.width = "100px";
     button.height = "20px";
     button.color = "white";
@@ -389,7 +390,7 @@ export class RobotScene {
   }
 
   createMenuButton(name : string, text : string, onClick : () => void) {
-    var button = GUI.Button.CreateSimpleButton(name, text);
+    const button = GUI.Button.CreateSimpleButton(name, text);
     button.widthInPixels = 120;
     button.heightInPixels = 30;
     button.color = "white";
@@ -428,20 +429,20 @@ export class RobotScene {
     this.UILayer.addControl(this.hamburgerButton);
 
     // Create menu panel container
-    const menuContainer = new GUI.Rectangle("menuContainer");
-    menuContainer.widthInPixels = 175;
-    menuContainer.heightInPixels = 400;
-    menuContainer.cornerRadius = 8;
-    menuContainer.color = "white";
-    menuContainer.thickness = 2;
-    menuContainer.background = "rgba(0, 0, 0, 0.6)";
-    menuContainer.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-    menuContainer.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    menuContainer.leftInPixels = 10;
-    menuContainer.topInPixels = 60;
-    menuContainer.isVisible = false;
+    this.menuContainer = new GUI.Rectangle("menuContainer");
+    this.menuContainer.widthInPixels = 175;
+    this.menuContainer.heightInPixels = 400;
+    this.menuContainer.cornerRadius = 8;
+    this.menuContainer.color = "white";
+    this.menuContainer.thickness = 2;
+    this.menuContainer.background = "rgba(0, 0, 0, 0.6)";
+    this.menuContainer.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    this.menuContainer.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    this.menuContainer.leftInPixels = 10;
+    this.menuContainer.topInPixels = 60;
+    this.menuContainer.isVisible = false;
     
-    this.UILayer.addControl(menuContainer);
+    this.UILayer.addControl(this.menuContainer);
 
     // Create scroll viewer for the menu
     this.menuScrollViewer = new GUI.ScrollViewer("menuScrollViewer");
@@ -452,7 +453,7 @@ export class RobotScene {
     this.menuScrollViewer.heightInPixels = 400;
     this.menuScrollViewer.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
     
-    menuContainer.addControl(this.menuScrollViewer);
+    this.menuContainer.addControl(this.menuScrollViewer);
 
     // Create the menu panel (vertical stack)
     this.menuPanel = new GUI.StackPanel("menuPanel");
@@ -467,9 +468,6 @@ export class RobotScene {
 
     // Add all the menu buttons
     this.createMenuButtons();
-
-    // Store reference to container for toggling
-    (this as any).menuContainer = menuContainer;
   }
 
   createMenuButtons() {
@@ -533,10 +531,8 @@ export class RobotScene {
 
   toggleMenu() {
     this.isMenuExpanded = !this.isMenuExpanded;
-    const menuContainer = (this as any).menuContainer;
-    
-    if (menuContainer) {
-      menuContainer.isVisible = this.isMenuExpanded;
+    if (this.menuContainer) {
+      this.menuContainer.isVisible = this.isMenuExpanded;
     }
     
     // Update hamburger button icon
